@@ -12,7 +12,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+if (!process.env.VERCEL) {
+  if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+  }
+}
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const storage = multer.diskStorage({
