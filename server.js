@@ -2,26 +2,26 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS || 'Wyt11223344$$';
 
-// Memory storage for serverless environment
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database Connection Middleware
+// Serve static files from root directory
+app.use(express.static(__dirname));
+
+// Database connection
 let isConnected = false;
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
   if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is not configured in Vercel Environment Variables.');
+    throw new Error('MONGODB_URI environment variable is missing.');
   }
   const db = await mongoose.connect(process.env.MONGODB_URI);
   isConnected = db.connections[0].readyState;
@@ -36,7 +36,7 @@ app.use(async (req, res, next) => {
   }
 });
 
-/* ─── Schemas ─── */
+/* ─── Schemas & Models ─── */
 const Submission = mongoose.models.Submission || mongoose.model('Submission', new mongoose.Schema({
   fullName: String, email: String, phone: String, interest: String, message: String, status: { type: String, default: 'new' }, submittedAt: { type: Date, default: Date.now }
 }));
@@ -76,6 +76,19 @@ function checkAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: 'Unauthorized access' });
 }
 
+/* ─── HTML Page Routes ─── */
+app.get('/admin', (req, res) => {
+  const admin2Path = path.join(__dirname, 'admin_2.html');
+  const adminPath = path.join(__dirname, 'admin.html');
+
+  if (fs.existsSync(admin2Path)) {
+    return res.sendFile(admin2Path);
+  } else if (fs.existsSync(adminPath)) {
+    return res.sendFile(adminPath);
+  }
+  res.status(404).send('Admin HTML file not found.');
+});
+
 /* ─── API Routes ─── */
 app.get('/api/content', async (req, res) => {
   try {
@@ -92,7 +105,6 @@ app.get('/api/content', async (req, res) => {
   }
 });
 
-// Admin FAQs
 app.get('/api/admin/faqs', checkAdminAuth, async (req, res) => {
   try {
     const faqs = await Faq.find();
@@ -121,7 +133,6 @@ app.delete('/api/admin/faqs/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Submissions
 app.get('/api/admin/submissions', checkAdminAuth, async (req, res) => {
   try {
     const subs = await Submission.find().sort({ submittedAt: -1 });
@@ -149,8 +160,7 @@ app.delete('/api/admin/submissions/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Locations
-app.post('/api/admin/locations', checkAdminAuth, upload.single('image'), async (req, res) => {
+app.post('/api/admin/locations', checkAdminAuth, async (req, res) => {
   try {
     const loc = new Location(req.body);
     await loc.save();
@@ -169,8 +179,7 @@ app.delete('/api/admin/locations/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Machines
-app.post('/api/admin/machines', checkAdminAuth, upload.single('image'), async (req, res) => {
+app.post('/api/admin/machines', checkAdminAuth, async (req, res) => {
   try {
     const mach = new Machine(req.body);
     await mach.save();
@@ -189,8 +198,7 @@ app.delete('/api/admin/machines/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Products
-app.post('/api/admin/products', checkAdminAuth, upload.single('image'), async (req, res) => {
+app.post('/api/admin/products', checkAdminAuth, async (req, res) => {
   try {
     const prod = new Product(req.body);
     await prod.save();
@@ -209,7 +217,6 @@ app.delete('/api/admin/products/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Partners
 app.post('/api/admin/partners', checkAdminAuth, async (req, res) => {
   try {
     const partner = new Partner(req.body);
@@ -229,7 +236,6 @@ app.delete('/api/admin/partners/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
-// Stats & Settings
 app.put('/api/admin/stats', checkAdminAuth, async (req, res) => {
   try {
     let stats = await Stats.findOne();
