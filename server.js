@@ -27,7 +27,7 @@ async function connectDB() {
   isConnected = db.connections[0].readyState;
 }
 
-app.use(async (req, res, next) => {
+app.use('/api', async (req, res, next) => {
   try {
     await connectDB();
     next();
