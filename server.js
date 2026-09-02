@@ -3,47 +3,28 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS || 'Wyt11223344$$';
 
-// Serverless-safe upload directory setup
-const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  try {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  } catch (err) {
-    console.error('Directory creation skipped:', err.message);
-  }
-}
-
-// Multer Config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
+// Memory storage for serverless environment
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(uploadDir));
 
 // Database Connection Middleware
 let isConnected = false;
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
-  if (process.env.MONGODB_URI) {
-    const db = await mongoose.connect(process.env.MONGODB_URI);
-    isConnected = db.connections[0].readyState;
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not configured in Vercel Environment Variables.');
   }
+  const db = await mongoose.connect(process.env.MONGODB_URI);
+  isConnected = db.connections[0].readyState;
 }
 
 app.use(async (req, res, next) => {
@@ -51,7 +32,7 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Database Connection Failed', error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -95,22 +76,30 @@ function checkAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: 'Unauthorized access' });
 }
 
-/* ─── Routes ─── */
+/* ─── API Routes ─── */
 app.get('/api/content', async (req, res) => {
-  const locations = await Location.find();
-  const machines = await Machine.find();
-  const products = await Product.find();
-  const faqs = await Faq.find();
-  const partners = await Partner.find();
-  const settings = await Settings.findOne() || {};
-  const stats = await Stats.findOne() || {};
-  res.json({ locations, machines, products, faqs, partners, settings, stats });
+  try {
+    const locations = await Location.find();
+    const machines = await Machine.find();
+    const products = await Product.find();
+    const faqs = await Faq.find();
+    const partners = await Partner.find();
+    const settings = await Settings.findOne() || {};
+    const stats = await Stats.findOne() || {};
+    res.json({ locations, machines, products, faqs, partners, settings, stats });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Admin FAQs
 app.get('/api/admin/faqs', checkAdminAuth, async (req, res) => {
-  const faqs = await Faq.find();
-  res.json(faqs);
+  try {
+    const faqs = await Faq.find();
+    res.json(faqs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/admin/faqs', checkAdminAuth, async (req, res) => {
@@ -124,97 +113,143 @@ app.post('/api/admin/faqs', checkAdminAuth, async (req, res) => {
 });
 
 app.delete('/api/admin/faqs/:id', checkAdminAuth, async (req, res) => {
-  await Faq.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Faq.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Submissions
+// Submissions
 app.get('/api/admin/submissions', checkAdminAuth, async (req, res) => {
-  const subs = await Submission.find().sort({ submittedAt: -1 });
-  res.json(subs);
+  try {
+    const subs = await Submission.find().sort({ submittedAt: -1 });
+    res.json(subs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put('/api/admin/submissions/:id/status', checkAdminAuth, async (req, res) => {
-  const updated = await Submission.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-  res.json(updated);
+  try {
+    const updated = await Submission.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/admin/submissions/:id', checkAdminAuth, async (req, res) => {
-  await Submission.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Submission.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Locations
+// Locations
 app.post('/api/admin/locations', checkAdminAuth, upload.single('image'), async (req, res) => {
-  let imageUrl = req.body.imageUrl || (req.file ? '/uploads/' + req.file.filename : '');
-  const loc = new Location({ ...req.body, image: imageUrl });
-  await loc.save();
-  res.json(loc);
+  try {
+    const loc = new Location(req.body);
+    await loc.save();
+    res.json(loc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/admin/locations/:id', checkAdminAuth, async (req, res) => {
-  await Location.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Location.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Machines
+// Machines
 app.post('/api/admin/machines', checkAdminAuth, upload.single('image'), async (req, res) => {
-  let imageUrl = req.file ? '/uploads/' + req.file.filename : '';
-  let specs = req.body.specs ? (typeof req.body.specs === 'string' ? JSON.parse(req.body.specs) : req.body.specs) : [];
-  const mach = new Machine({ ...req.body, image: imageUrl, specs });
-  await mach.save();
-  res.json(mach);
+  try {
+    const mach = new Machine(req.body);
+    await mach.save();
+    res.json(mach);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/admin/machines/:id', checkAdminAuth, async (req, res) => {
-  await Machine.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Machine.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Products
+// Products
 app.post('/api/admin/products', checkAdminAuth, upload.single('image'), async (req, res) => {
-  let imageUrl = req.body.imageUrl || (req.file ? '/uploads/' + req.file.filename : '');
-  const items = req.body.items ? req.body.items.split(',').map(i => i.trim()) : [];
-  const prod = new Product({ ...req.body, items, image: imageUrl });
-  await prod.save();
-  res.json(prod);
+  try {
+    const prod = new Product(req.body);
+    await prod.save();
+    res.json(prod);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/admin/products/:id', checkAdminAuth, async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Partners
+// Partners
 app.post('/api/admin/partners', checkAdminAuth, async (req, res) => {
-  const partner = new Partner(req.body);
-  await partner.save();
-  res.json(partner);
+  try {
+    const partner = new Partner(req.body);
+    await partner.save();
+    res.json(partner);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/admin/partners/:id', checkAdminAuth, async (req, res) => {
-  await Partner.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Partner.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Admin Stats & Settings
+// Stats & Settings
 app.put('/api/admin/stats', checkAdminAuth, async (req, res) => {
-  let stats = await Stats.findOne();
-  if (stats) { Object.assign(stats, req.body); await stats.save(); }
-  else { stats = new Stats(req.body); await stats.save(); }
-  res.json(stats);
+  try {
+    let stats = await Stats.findOne();
+    if (stats) { Object.assign(stats, req.body); await stats.save(); }
+    else { stats = new Stats(req.body); await stats.save(); }
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put('/api/admin/settings', checkAdminAuth, async (req, res) => {
-  let settings = await Settings.findOne();
-  if (settings) { Object.assign(settings, req.body); await settings.save(); }
-  else { settings = new Settings(req.body); await settings.save(); }
-  res.json(settings);
-});
-
-// Serve frontend admin page
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  try {
+    let settings = await Settings.findOne();
+    if (settings) { Object.assign(settings, req.body); await settings.save(); }
+    else { settings = new Settings(req.body); await settings.save(); }
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 if (process.env.NODE_ENV !== 'production') {
