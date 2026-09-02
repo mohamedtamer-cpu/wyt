@@ -1,10 +1,13 @@
 {
-  "functions": {
-    "server.js": {
-      "includeFiles": "*.html"
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/server.js" }
+    { "source": "/api/(.*)", "destination": "/server.js" },
+    { "source": "/admin", "destination": "/admin_2.html" }
   ]
 }
