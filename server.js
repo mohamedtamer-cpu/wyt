@@ -12,10 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve files from the public folder
+// Serve all static assets from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection for API endpoints only
+// Database connection middleware for API routes
 let isConnected = false;
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
@@ -75,9 +75,13 @@ function checkAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: 'Unauthorized access' });
 }
 
-/* ─── Route for Admin Page ─── */
+/* ─── Page Routes ─── */
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 /* ─── API Endpoints ─── */
