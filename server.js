@@ -11,16 +11,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
-if (!process.env.VERCEL) {
-  if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
-  }
+
+// Serve static assets from public folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Configure uploads directory based on environment
+const uploadsDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, 'uploads/'),
+  destination: (_, __, cb) => cb(null, uploadsDir),
   filename:    (_, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g,'-'))
 });
 const upload = multer({ storage, limits:{ fileSize: 8*1024*1024 } });
@@ -96,11 +99,11 @@ app.post('/api/admin/upload', auth, upload.single('image'), (req,res) => {
 });
 
 app.get('/api/admin/uploads', auth, (req,res) => {
-  const files = fs.existsSync('uploads') ? fs.readdirSync('uploads').filter(f=>!f.startsWith('.')).map(f=>({name:f,url:'uploads/'+f})) : [];
+  const files = fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir).filter(f=>!f.startsWith('.')).map(f=>({name:f,url:'uploads/'+f})) : [];
   res.json(files);
 });
 app.delete('/api/admin/uploads/:filename', auth, (req,res) => {
-  const f = path.join('uploads', req.params.filename);
+  const f = path.join(uploadsDir, req.params.filename);
   if (fs.existsSync(f)) fs.unlinkSync(f);
   res.json({success:true});
 });
@@ -155,23 +158,19 @@ app.get('/api/admin/export', auth, (req,res) => {
 app.get('/admin', (req,res) => {
   if (!req.query.pass) return res.send(`<!DOCTYPE html><html><head><title>WYT Admin</title><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,Arial,sans-serif;background:#f8f7f3;display:flex;align-items:center;justify-content:center;min-height:100vh}.box{background:#fff;border-radius:16px;padding:48px 40px;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.08);width:340px}img{height:44px;margin:0 auto 24px;display:block;object-fit:contain}h2{font-size:20px;font-weight:700;margin-bottom:6px;color:#111318}p{color:#9ca3af;font-size:14px;margin-bottom:28px}input{width:100%;padding:12px 14px;border:1.5px solid #e8e6e0;border-radius:10px;font-size:14px;margin-bottom:14px;outline:none;transition:border-color .2s}input:focus{border-color:#111318}button{width:100%;background:#111318;color:#fff;border:none;padding:14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}button:hover{background:#2d3140}</style></head><body><div class="box"><img src="images/WhatsApp Image 2026-02-10 at 7.54.49 PM.jpeg" alt="WYT"/><h2>WYT Admin Panel</h2><p>Enter your admin password</p><form method="GET" action="/admin"><input type="password" name="pass" placeholder="Password" required autofocus/><button>Login →</button></form></div></body></html>`);
   if (req.query.pass !== process.env.ADMIN_PASSWORD) return res.status(401).send('<h2 style="font-family:Arial;text-align:center;margin-top:40px;color:#dc2626">Wrong password — <a href="/admin">Try again</a></h2>');
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('*', (req,res) => res.sendFile(path.join(__dirname,'index.html')));
+app.get('*', (req,res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.listen(PORT, () => {
-  console.log('\n✅  WYT running   → http://localhost:' + PORT);
-  console.log('🔐  Admin panel   → http://localhost:' + PORT + '/admin');
-  console.log('📁  Database      → data/content.json + data/submissions.json\n');
-});
-// Only listen when running locally (not on Vercel)
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
+// Only start direct listener when running locally
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log('\n✅  WYT running   → http://localhost:' + PORT);
+    console.log('🔐  Admin panel   → http://localhost:' + PORT + '/admin');
+    console.log('📁  Database      → data/content.json + data/submissions.json\n');
   });
 }
 
-// Export the app for Vercel serverless environment
+// Export app for Vercel
 module.exports = app;
