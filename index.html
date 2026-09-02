@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WYT — Smart Vending Machines</title>
+  <meta name="description" content="WYT delivers next-generation smart vending machines across Egypt."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="navbar">
+  <div class="nav-container">
+    <a href="#home" class="nav-logo"><img src="images/WhatsApp Image 2026-02-10 at 7.54.49 PM.jpeg" alt="WYT"/></a>
+    <ul class="nav-links">
+      <li><a href="#about"      data-i18n="nav-about">About</a></li>
+      <li><a href="#machines"   data-i18n="nav-machines">Machines</a></li>
+      <li><a href="#products"   data-i18n="nav-products">Products</a></li>
+      <li><a href="#host"       data-i18n="nav-host">Host a Machine</a></li>
+      <li><a href="#collab"     data-i18n="nav-collab">Collaborate</a></li>
+      <li><a href="#faq"        data-i18n="nav-faq">FAQ</a></li>
+      <li><a href="#contact"    data-i18n="nav-contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">عربي</button>
+      <a href="#contact" class="btn btn-dark nav-cta" data-i18n="nav-cta">Request a Machine</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <img src="images/WhatsApp Image 2026-02-10 at 7.54.49 PM.jpeg" alt="WYT" class="drawer-logo"/>
+    <button class="drawer-close" id="drawerClose">✕</button>
+  </div>
+  <ul class="drawer-links">
+    <li><a href="#about"    data-i18n="nav-about">About WYT</a></li>
+    <li><a href="#machines" data-i18n="nav-machines">Our Machines</a></li>
+    <li><a href="#products" data-i18n="nav-products">Products</a></li>
+    <li><a href="#host"     data-i18n="nav-host">Host a Machine</a></li>
+    <li><a href="#collab"   data-i18n="nav-collab">Collaborate</a></li>
+    <li><a href="#faq"      data-i18n="nav-faq">FAQ</a></li>
+    <li><a href="#contact"  data-i18n="nav-contact">Contact</a></li>
+  </ul>
+  <button class="lang-toggle drawer-lang" id="drawerLangToggle">عربي</button>
+  <a href="#contact" class="btn btn-dark drawer-cta" data-i18n="nav-cta">Request a Machine</a>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section id="home" class="hero">
+  <div class="hero-bg">
+    <img src="machine.jfif" alt="WYT Vending Machine" class="hero-bg-img"/>
+    <div class="hero-bg-overlay"></div>
+  </div>
+  <div class="hero-inner container">
+    <div class="hero-text">
+      <span class="hero-tag" data-i18n="hero-tag">Smart Vending · Egypt</span>
+      <h1 data-i18n-html="hero-title">Vending that actually <em>works.</em></h1>
+      <p class="hero-sub" data-i18n="hero-sub">WYT brings sleek, cashless, always-stocked vending machines to offices, gyms, hospitals and schools — with zero hassle on your end.</p>
+      <div class="hero-btns">
+        <a href="#host"     class="btn btn-dark"    data-i18n="hero-btn1">Host a Machine — Free</a>
+        <a href="#machines" class="btn btn-outline"  data-i18n="hero-btn2">See Our Machines</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <strong class="counter" id="stat-mach-num" data-target="500" data-suffix="+">0+</strong>
+          <span data-i18n="stat-machines" id="stat-mach-lbl">Machines Deployed</span>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat">
+          <strong class="counter" id="stat-loc-num" data-target="120" data-suffix="+">0+</strong>
+          <span data-i18n="stat-locations" id="stat-loc-lbl">Partner Locations</span>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat">
+          <strong class="counter" id="stat-up-num" data-target="98" data-suffix="%">0%</strong>
+          <span data-i18n="stat-uptime" id="stat-up-lbl">Uptime</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <a href="#about" class="hero-scroll" aria-label="Scroll down">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </a>
+</section>
+
+<!-- ═══════════ ABOUT ═══════════ -->
+<section id="about" class="section bg-cream">
+  <div class="container">
+    <div class="two-col">
+      <div class="col-text reveal">
+        <span class="section-tag" data-i18n="about-tag">Who We Are</span>
+        <h2 data-i18n="about-title">We're not just a vending company.</h2>
+        <p data-i18n="about-p1">WYT was built on a simple idea — people deserve better than stale snacks from a dusty machine. We set out to design a vending experience that's smart, fresh, and genuinely enjoyable.</p>
+        <p data-i18n="about-p2">Today we operate across hundreds of locations in Egypt, powered by cashless payments, real-time inventory tracking, and premium products curated for every kind of space.</p>
+        <div class="pillars">
+          <div class="pillar reveal">
+            <div class="pillar-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div><h4 data-i18n="p1-title">Zero Hassle</h4><p data-i18n="p1-desc">We install, restock and maintain everything.</p></div>
+          </div>
+          <div class="pillar reveal">
+            <div class="pillar-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            <div><h4 data-i18n="p2-title">Smart Technology</h4><p data-i18n="p2-desc">Cashless, connected, monitored 24/7.</p></div>
+          </div>
+          <div class="pillar reveal">
+            <div class="pillar-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div><h4 data-i18n="p3-title">Fresh Products</h4><p data-i18n="p3-desc">Premium brands updated by demand data.</p></div>
+          </div>
+          <div class="pillar reveal">
+            <div class="pillar-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div><h4 data-i18n="p4-title">True Partnership</h4><p data-i18n="p4-desc">Your space, our machine — you earn too.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-image reveal">
+        <img src="machine.jfif" alt="WYT Machine in lobby" class="about-photo"/>
+        <div class="about-badge"><strong>#1</strong><span data-i18n="about-badge">Smart Vending in Egypt</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MACHINES ═══════════ -->
+<section id="machines" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="machines-tag">Our Lineup</span>
+      <h2 data-i18n="machines-title">A machine for every space</h2>
+      <p data-i18n="machines-sub">Click any model to see full specifications.</p>
+    </div>
+    <div class="machines-grid" id="machinesGrid">
+    <!-- loaded by render.js -->
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <img src="machine.jfif" alt="Machine" id="modalImg" class="modal-img"/>
+    <div class="modal-body">
+      <h3 id="modalName"></h3>
+      <p id="modalDesc"></p>
+      <div class="modal-specs" id="modalSpecs"></div>
+      <a href="#contact" class="btn btn-dark" onclick="closeModal()" data-i18n="modal-cta">Request This Machine →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PRODUCTS ═══════════ -->
+<section id="products" class="section bg-cream">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="products-tag">What We Stock</span>
+      <h2 data-i18n="products-title">Something for everyone</h2>
+      <p data-i18n="products-sub">Curated to satisfy every craving and dietary need.</p>
+    </div>
+    <div class="products-grid" id="productsGrid">
+    <!-- loaded by render.js -->
+  </div>
+</section>
+
+<!-- ═══════════ HOST ═══════════ -->
+<section id="host" class="section bg-dark">
+  <div class="container">
+    <div class="two-col">
+      <div class="col-text reveal">
+        <span class="section-tag light" data-i18n="host-tag">For Your Business</span>
+        <h2 class="light" data-i18n="host-title">Host a WYT Machine — Free</h2>
+        <p class="muted-light" data-i18n="host-sub">We supply, install, restock and maintain everything. You provide the space and earn a share of every sale.</p>
+        <div class="host-perks">
+          <div class="perk reveal"><span class="perk-n">01</span><div><h4 data-i18n="perk1-t">Zero Upfront Cost</h4><p data-i18n="perk1-d">No purchase, no lease, no risk.</p></div></div>
+          <div class="perk reveal"><span class="perk-n">02</span><div><h4 data-i18n="perk2-t">Revenue Sharing</h4><p data-i18n="perk2-d">You earn a commission on every sale.</p></div></div>
+          <div class="perk reveal"><span class="perk-n">03</span><div><h4 data-i18n="perk3-t">Full Maintenance</h4><p data-i18n="perk3-d">We handle all repairs and restocking.</p></div></div>
+          <div class="perk reveal"><span class="perk-n">04</span><div><h4 data-i18n="perk4-t">Custom Branding</h4><p data-i18n="perk4-d">Wrap the machine with your logo.</p></div></div>
+        </div>
+        <a href="#contact" class="btn btn-white" data-i18n="host-cta">Apply to Host →</a>
+      </div>
+      <div class="venues-grid reveal">
+        <div class="vc"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80" alt="Office" loading="lazy"/><div class="vo"><h4 data-i18n="v1-t">Corporate Offices</h4><p data-i18n="v1-d">Keep your team fuelled all day</p></div></div>
+        <div class="vc"><img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80" alt="Gym" loading="lazy"/><div class="vo"><h4 data-i18n="v2-t">Gyms &amp; Fitness</h4><p data-i18n="v2-d">Protein &amp; electrolytes on demand</p></div></div>
+        <div class="vc"><img src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80" alt="Hospital" loading="lazy"/><div class="vo"><h4 data-i18n="v3-t">Hospitals</h4><p data-i18n="v3-d">24/7 access for staff &amp; visitors</p></div></div>
+        <div class="vc"><img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&q=80" alt="University" loading="lazy"/><div class="vo"><h4 data-i18n="v4-t">Universities</h4><p data-i18n="v4-d">Healthy options all day</p></div></div>
+        <div class="vc"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80" alt="Hotel" loading="lazy"/><div class="vo"><h4 data-i18n="v5-t">Hotels</h4><p data-i18n="v5-d">Elevate guest experience</p></div></div>
+        <div class="vc"><img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80" alt="Factory" loading="lazy"/><div class="vo"><h4 data-i18n="v6-t">Factories</h4><p data-i18n="v6-d">Sustain productivity on shifts</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ COLLABORATE ═══════════ -->
+<section id="collab" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="collab-tag">Partnerships</span>
+      <h2 data-i18n="collab-title">Let's collaborate</h2>
+      <p data-i18n="collab-sub">Open to brands, distributors, investors and entrepreneurs.</p>
+    </div>
+    <div class="collab-grid">
+      <div class="collab-card reveal">
+        <div class="cc-img"><img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&q=80" alt="Brand" loading="lazy"/></div>
+        <div class="cc-body"><h3 data-i18n="c1-t">Brand Partnership</h3><p data-i18n="c1-d">Get your product stocked in WYT machines across Egypt and reach thousands of customers daily.</p><a href="#contact" class="btn btn-outline-dark" data-i18n="c1-cta">Partner With Us</a></div>
+      </div>
+      <div class="collab-card reveal">
+        <div class="cc-img"><img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&q=80" alt="Distribution" loading="lazy"/></div>
+        <div class="cc-body"><h3 data-i18n="c2-t">Distribution &amp; Franchise</h3><p data-i18n="c2-d">Want to bring WYT to your city? We offer franchise models for entrepreneurs building a vending business.</p><a href="#contact" class="btn btn-outline-dark" data-i18n="c2-cta">Explore This</a></div>
+      </div>
+      <div class="collab-card reveal">
+        <div class="cc-img"><img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&q=80" alt="Tech" loading="lazy"/></div>
+        <div class="cc-body"><h3 data-i18n="c3-t">Tech &amp; Integration</h3><p data-i18n="c3-d">Tech company, payment provider or app developer? Let's integrate and make vending smarter together.</p><a href="#contact" class="btn btn-outline-dark" data-i18n="c3-cta">Let's Build</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TESTIMONIALS ═══════════ -->
+<!-- ═══════════ WHERE WE ARE ═══════════ -->
+<section id="locations" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="loc-tag">Our Machines in the Wild</span>
+      <h2 data-i18n="loc-title">Trusted across Egypt</h2>
+      <p data-i18n="loc-sub">Our machines are live at these locations — add yours to the map.</p>
+    </div>
+
+    <!-- Trusted partner bar -->
+    <div class="partners-bar reveal" id="partnersBar">
+    <!-- loaded by render.js -->
+  </div><span>GymNation</span></div>
+      <div class="partner-logo"><div class="logo-badge" style="background:#fef3e8;color:#c67c1a;">MM</div><span>Maadi Medical</span></div>
+      <div class="partner-logo"><div class="logo-badge" style="background:#edf7ed;color:#2e7d32;">OC</div><span>Orascom</span></div>
+      <div class="partner-logo"><div class="logo-badge" style="background:#f3e8ff;color:#6d28d9;">AU</div><span>AUC</span></div>
+      <div class="partner-logo"><div class="logo-badge" style="background:#fde8e8;color:#b91c1c;">HC</div><span>Hilton Cairo</span></div>
+      <div class="partner-logo"><div class="logo-badge" style="background:#e8f0fe;color:#1557c0;">EE</div><span>Elsewedy</span></div>
+    </div>
+
+    <!-- Location photo gallery: machine in real venues -->
+    <div class="locations-grid" id="locationsGrid">
+    <!-- loaded by render.js -->
+    
+
+    <!-- CTA strip -->
+    <div class="loc-cta reveal">
+      <div class="loc-cta-text">
+        <h3 data-i18n="loc-cta-title">Want to see your space here?</h3>
+        <p data-i18n="loc-cta-sub">Join 120+ locations across Egypt. It's completely free.</p>
+      </div>
+      <a href="#contact" class="btn btn-dark" data-i18n="loc-cta-btn">Add Your Location →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="faq-tag">FAQ</span>
+      <h2 data-i18n="faq-title">Common Questions</h2>
+    </div>
+    <div class="faq-list" id="faqList">
+    <!-- loaded by render.js -->
+  </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONTACT ═══════════ -->
+<section id="contact" class="section bg-cream">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag" data-i18n="contact-tag">Contact</span>
+      <h2 data-i18n="contact-title">Let's work together</h2>
+      <p data-i18n="contact-sub">Fill in the form and our team will respond within 24 hours.</p>
+    </div>
+    <div class="contact-grid">
+
+      <!-- Left: Info -->
+      <div class="contact-info reveal">
+        <div class="ci">
+          <div class="ci-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><label data-i18n="ci-address">Address</label><span id="ci-address-val">Cairo, Egypt</span></div>
+        </div>
+        <div class="ci">
+          <div class="ci-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.15 3.42 2 2 0 0 1 3.12 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.36a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 14.92z"/></svg></div>
+          <div><label data-i18n="ci-phone">WhatsApp</label><span dir="ltr" id="ci-phone-val">+20 1009999632</span></div>
+        </div>
+        <div class="ci">
+          <div class="ci-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div><label data-i18n="ci-email">Email</label><span id="ci-email-val">mohamedtamer668er@gmail.com</span></div>
+        </div>
+        <div class="ci">
+          <div class="ci-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div><label data-i18n="ci-hours">Working Hours</label><span data-i18n="ci-hours-val" id="ci-hours-val">Sun–Thu, 9AM – 5PM</span></div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d27629.09!2d31.2357!3d30.0444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2seg!4v1" width="100%" height="180" style="border:0;border-radius:12px;" allowfullscreen="" loading="lazy" title="WYT Cairo"></iframe>
+        </div>
+        <div class="trust-badges">
+          <div class="trust-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span data-i18n="trust1">100% Free to Host</span></div>
+          <div class="trust-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="trust2">No Contracts</span></div>
+          <div class="trust-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span data-i18n="trust3">24h Response</span></div>
+        </div>
+      </div>
+
+      <!-- Right: Form -->
+      <form class="contact-form reveal" id="contactForm">
+        <div class="form-row">
+          <div class="ff"><label for="fn" data-i18n="f-fname">First Name</label><input type="text" id="fn" data-i18n-placeholder="f-fname-ph" placeholder="Ahmed" required/></div>
+          <div class="ff"><label for="ln" data-i18n="f-lname">Last Name</label><input type="text" id="ln" data-i18n-placeholder="f-lname-ph" placeholder="Hassan" required/></div>
+        </div>
+        <div class="ff"><label for="fe" data-i18n="f-email">Email</label><input type="email" id="fe" placeholder="example@company.com" required/></div>
+        <div class="ff"><label for="fp" data-i18n="f-phone">Phone / WhatsApp</label><input type="tel" id="fp" data-i18n-placeholder="f-phone-ph" placeholder="Enter your phone number"/></div>
+        <div class="ff">
+          <label for="fi" data-i18n="f-interest">I'm interested in…</label>
+          <select id="fi">
+            <option value="" data-i18n="f-select">Select an option</option>
+            <option data-i18n="f-opt1">Hosting a machine (free)</option>
+            <option data-i18n="f-opt2">Brand / product partnership</option>
+            <option data-i18n="f-opt3">Distribution / franchise</option>
+            <option data-i18n="f-opt4">Tech integration</option>
+            <option data-i18n="f-opt5">Other</option>
+          </select>
+        </div>
+        <div class="ff"><label for="fm" data-i18n="f-msg">Message</label><textarea id="fm" rows="4" data-i18n-placeholder="f-msg-ph" placeholder="Tell us about your space, goals, or any questions…"></textarea></div>
+        <button type="submit" class="btn btn-dark submit-full" id="submitBtn" data-i18n="f-submit">Send Message →</button>
+        <div class="form-microcopy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span data-i18n="f-microcopy">Your information is private and never shared. We respond within 24 hours.</span>
+        </div>
+        <div class="form-success" id="formSuccess">✓ <span data-i18n="f-success">Message sent! We'll be in touch within 24 hours.</span></div>
+        <div class="form-error"   id="formError">✗ <span data-i18n="f-error">Something went wrong. Please WhatsApp us directly.</span></div>
+      </form>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="images/WhatsApp Image 2026-02-10 at 7.54.49 PM.jpeg" alt="WYT" class="footer-logo"/>
+        <p data-i18n="footer-desc">Smart vending for modern spaces across Egypt.</p>
+        <div class="socials">
+          <a href="#" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a href="#" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+          <a href="https://wa.me/201009999632" id="footer-wa-icon" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor"><path d="M16 0C7.164 0 0 7.163 0 16c0 2.824.737 5.473 2.027 7.774L0 32l8.484-2.002A15.93 15.93 0 0016 32c8.836 0 16-7.163 16-16S24.836 0 16 0zm7.274 19.424c-.398-.2-2.355-1.162-2.72-1.294-.365-.133-.631-.2-.897.2-.266.398-1.03 1.294-1.263 1.56-.232.265-.465.298-.863.1-.398-.2-1.682-.62-3.204-1.979-1.184-1.057-1.984-2.363-2.216-2.762-.232-.398-.025-.613.175-.811.179-.178.398-.465.597-.697.199-.232.265-.398.398-.664.133-.265.066-.497-.034-.697-.1-.2-.897-2.162-1.229-2.961-.323-.779-.653-.673-.897-.685l-.764-.013c-.265 0-.697.1-1.063.497-.365.398-1.394 1.362-1.394 3.321s1.427 3.852 1.626 4.118c.2.265 2.81 4.29 6.808 6.016.951.41 1.694.655 2.273.839.955.304 1.825.261 2.513.158.766-.115 2.355-.963 2.688-1.893.333-.93.333-1.727.233-1.893-.1-.165-.365-.265-.763-.464z"/></svg></a>
+        </div>
+      </div>
+      <div class="fc"><h4 data-i18n="footer-company">Company</h4><ul><li><a href="#about" data-i18n="nav-about">About WYT</a></li><li><a href="#machines" data-i18n="nav-machines">Our Machines</a></li><li><a href="#collab" data-i18n="nav-collab">Partnerships</a></li><li><a href="#contact" data-i18n="nav-contact">Contact</a></li></ul></div>
+      <div class="fc"><h4 data-i18n="footer-services">Services</h4><ul><li><a href="#host" data-i18n="nav-host">Host a Machine</a></li><li><a href="#products" data-i18n="nav-products">What We Stock</a></li><li><a href="#collab" data-i18n="nav-collab">Collaborate</a></li><li><a href="#faq" data-i18n="nav-faq">FAQ</a></li></ul></div>
+      <div class="fc"><h4 data-i18n="footer-contact">Get In Touch</h4><ul><li><a href="tel:+201009999632" dir="ltr" id="footer-phone">+20 1009999632</a></li><li><a href="mailto:mohamedtamer668er@gmail.com" id="footer-email">mohamedtamer668er@gmail.com</a></li><li><a href="https://wa.me/201009999632" id="footer-wa-link" data-i18n="footer-wa">WhatsApp Us</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer-copy">© 2025 WYT Vending Solutions. All rights reserved.</p>
+      <div><a href="#" data-i18n="footer-privacy">Privacy</a><a href="#" data-i18n="footer-terms">Terms</a></div>
+    </div>
+  </div>
+</footer>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/201009999632" id="floatingWaBtn" class="wa-btn" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <div class="wa-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 48 48">
+      <path fill="#fff" d="M35.5 12.4C32.6 9.5 28.7 8 24.6 8 16.1 8 9.2 14.9 9.2 23.4c0 2.7.7 5.3 2 7.6L9 39l8.2-2.2c2.2 1.2 4.7 1.8 7.2 1.8h.1c8.4 0 15.3-6.9 15.3-15.4.1-4.1-1.5-8-4.3-10.8zM24.6 36.5c-2.3 0-4.6-.6-6.5-1.8l-.5-.3-4.9 1.3 1.3-4.8-.3-.5c-1.3-2-2-4.4-2-6.9 0-7 5.7-12.7 12.7-12.7 3.4 0 6.6 1.3 9 3.7 2.4 2.4 3.7 5.6 3.7 9-.1 7-5.8 12.7-12.5 12.7zm7-9.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-1 1.2-1.2 1.5-.2.3-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.2-.4.4-.6.1-.2.1-.5 0-.7-.1-.2-.8-2-1.1-2.8-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-1 .5-.3.4-1.3 1.3-1.3 3.2s1.4 3.7 1.6 4c.2.2 2.7 4.1 6.5 5.7.9.4 1.6.6 2.2.8.9.3 1.7.2 2.4.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.7.2-1.8-.1-.2-.4-.3-.8-.5z"/>
+    </svg>
+  </div>
+  <span class="wa-label" data-i18n="wa-label">Chat with us</span>
+</a>
+
+<script src="script.js"></script>
+<script src="render.js"></script>
+</body>
+</html>

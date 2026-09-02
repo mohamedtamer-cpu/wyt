@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════
+# WYT — .gitignore
+# Files to exclude from version control
+# ═══════════════════════════════════════════
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Data files (keep local, don't commit submissions or uploads)
+data/submissions.json
+uploads/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Build
+dist/
+build/
+
+# Backups
+*.tar.gz
+*.zip
+backup-*/
+
+# Certificates (store separately in production)
+certbot/
+.letsencrypt/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Testing
+.coverage/
+coverage/
+
+# IDE specific
+.editorconfig

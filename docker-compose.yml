@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════
+# WYT — docker-compose.yml
+# Services: App + Nginx + Certbot (SSL)
+# ═══════════════════════════════════════
+
+version: "3.9"
+
+services:
+
+  # ── WYT Node.js Application ──
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wyt-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    expose:
+      - "3000"
+    networks:
+      - wyt-network
+    volumes:
+      - app-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Nginx Reverse Proxy + SSL ──
+  nginx:
+    image: nginx:alpine
+    container_name: wyt-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot-webroot:/var/www/certbot:ro
+      - certbot-certs:/etc/letsencrypt:ro
+    depends_on:
+      - app
+    networks:
+      - wyt-network
+
+  # ── Certbot — Free SSL Certificate ──
+  certbot:
+    image: certbot/certbot:latest
+    container_name: wyt-certbot
+    volumes:
+      - certbot-webroot:/var/www/certbot
+      - certbot-certs:/etc/letsencrypt
+    # Run manually: docker compose run certbot certonly ...
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+# ── Networks ──
+networks:
+  wyt-network:
+    driver: bridge
+
+# ── Volumes ──
+volumes:
+  certbot-webroot:
+  certbot-certs:
+  app-logs:

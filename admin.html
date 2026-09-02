@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WYT Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f8f7f3;color:#111318;display:flex;min-height:100vh;font-size:14px}
+
+/* ── Sidebar ── */
+.sb{width:230px;background:#111318;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:200;overflow-y:auto}
+.sb-logo{padding:20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-logo img{height:34px;filter:brightness(0) invert(1);object-fit:contain}
+.sb-logo-text{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.sb-logo-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px}
+.sb-group{padding:16px 16px 4px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.25)}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-radius:8px;margin:1px 8px;color:rgba(255,255,255,.55);transition:all .18s;font-size:13px;font-weight:500;border:none;background:none;width:calc(100% - 16px);text-align:left}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.sb-item.active{color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 3px 0 0 rgba(255,255,255,.6)}
+.sb-item svg{flex-shrink:0;opacity:.65}
+.sb-item.active svg{opacity:1}
+.sb-bottom{margin-top:auto;padding:10px 8px;border-top:1px solid rgba(255,255,255,.07)}
+
+/* ── Main ── */
+.main{margin-left:230px;flex:1;padding:28px 32px;min-height:100vh}
+.page{display:none}
+.page.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Page title ── */
+.pg-title{margin-bottom:22px}
+.pg-title h1{font-size:22px;font-weight:700;letter-spacing:-.02em;font-family:-apple-system,Arial,sans-serif}
+.pg-title p{font-size:13px;color:#9ca3af;margin-top:4px}
+
+/* ── Stat row ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8e6e0}
+.sc-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.sc-val{font-size:26px;font-weight:800;color:#111318;letter-spacing:-.02em}
+.sc-lbl{font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+
+/* ── Card ── */
+.card{background:#fff;border:1px solid #e8e6e0;border-radius:14px;margin-bottom:20px;overflow:hidden}
+.card-head{padding:16px 22px;border-bottom:1px solid #f4f5f7;display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-size:14px;font-weight:700}
+.card-head span{font-size:12px;color:#9ca3af}
+.card-body{padding:22px}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:480px}
+thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;background:#f8f9fb;border-bottom:1px solid #eaecf0}
+tbody td{padding:11px 16px;border-bottom:1px solid #f4f5f7;font-size:13px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafaf8}
+.empty-td{text-align:center;padding:40px;color:#d1d5db;font-size:13px}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.form-grid.cols1{grid-template-columns:1fr}
+.ff{display:flex;flex-direction:column;gap:5px}
+.ff label{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;text-transform:uppercase}
+.ff input,.ff select,.ff textarea{border:1.5px solid #e2e5eb;border-radius:8px;padding:10px 12px;font-size:13px;color:#111318;background:#fff;outline:none;transition:border-color .18s,box-shadow .18s;width:100%;font-family:inherit}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:#111318;box-shadow:0 0 0 3px rgba(17,19,24,.08)}
+.ff textarea{resize:vertical;min-height:76px}
+.ff .hint{font-size:11px;color:#c0c4d0;margin-top:2px}
+.divider{height:1px;background:#f0f0f0;margin:18px 0}
+
+/* ── Upload zone ── */
+.dz{border:2px dashed #e2e5eb;border-radius:10px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc}
+.dz:hover{border-color:#111318;background:#f5f5f0}
+.dz-icon{width:42px;height:42px;background:#f0f0ec;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.dz strong{display:block;font-size:13px;color:#4b5563;margin-bottom:2px}
+.dz p{font-size:11px;color:#9ca3af}
+.img-prev-box{margin-top:10px;border-radius:8px;overflow:hidden;display:none}
+.img-prev-box img{width:100%;max-height:160px;object-fit:cover;display:block}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;text-decoration:none;white-space:nowrap;font-family:inherit}
+.btn-dark{background:#111318;color:#fff}.btn-dark:hover{background:#2d3140;transform:translateY(-1px)}
+.btn-ghost{background:#fff;border:1.5px solid #e2e5eb;color:#4b5563}.btn-ghost:hover{border-color:#111318;color:#111318}
+.btn-danger{background:#fff;border:1.5px solid #fecaca;color:#dc2626}.btn-danger:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+.btn-success{background:#fff;border:1.5px solid #bbf7d0;color:#16a34a}.btn-success:hover{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+
+/* ── Badge ── */
+.bdg{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.bdg-dark{background:#111318;color:#fff}
+.bdg-green{background:#f0fdf4;color:#16a34a}
+.bdg-amber{background:#fffbeb;color:#d97706}
+.bdg-gray{background:#f3f4f6;color:#6b7280}
+
+/* ── Alert ── */
+.alert{padding:11px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;border-left:4px solid}
+.alert-ok{background:#f0fdf4;border-color:#22c55e;color:#15803d}
+.alert-err{background:#fef2f2;border-color:#ef4444;color:#b91c1c}
+
+/* ── FAQ row ── */
+.faq-row{border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:8px;display:flex;gap:14px;align-items:flex-start;background:#fff}
+.faq-q{font-weight:700;font-size:14px;margin-bottom:3px;color:#111318}
+.faq-a{font-size:13px;color:#6b7280;line-height:1.6;margin-top:5px}
+.faq-qar{font-size:12px;color:#9ca3af;direction:rtl;text-align:right;margin-top:2px}
+
+/* ── Partner chip ── */
+.p-chip{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #e8e6e0;border-radius:10px;padding:10px 14px;margin:4px;transition:border-color .18s}
+.p-chip:hover{border-color:#111318}
+.p-badge{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.p-name{font-size:13px;font-weight:600;color:#111318}
+
+/* ── Image grid ── */
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.img-card{background:#fff;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;transition:box-shadow .2s}
+.img-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.img-card img{width:100%;height:110px;object-fit:cover;display:block;background:#f4f5f7}
+.img-card-foot{padding:10px 12px}
+.img-name{font-size:11px;color:#9ca3af;word-break:break-all;margin-bottom:6px;line-height:1.4}
+
+/* ── Thumb ── */
+.thumb{width:56px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e8e6e0;background:#f4f5f7}
+.tag{background:#f4f5f7;border-radius:99px;padding:2px 9px;font-size:11px;color:#6b7280;display:inline-block;margin:2px}
+
+@media(max-width:900px){
+  .sb{width:100%;height:54px;flex-direction:row;position:fixed;bottom:0;top:auto;overflow-x:auto;overflow-y:hidden;align-items:center;padding:0 8px}
+  .sb-logo,.sb-group{display:none}
+  .main{margin-left:0;padding:16px;padding-bottom:70px}
+  .sb-item{padding:8px 10px;flex-direction:column;font-size:9px;gap:2px;border-radius:0;margin:0;min-width:54px;text-align:center;box-shadow:none}
+  .sb-item.active{box-shadow:inset 0 3px 0 rgba(255,255,255,.6)}
+  .form-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="sb" id="sb">
+  <div class="sb-logo">
+    <img src="images/WhatsApp Image 2026-02-10 at 7.54.49 PM.jpeg" alt="WYT"/>
+    <div><div class="sb-logo-text">WYT Admin</div><div class="sb-logo-sub">Content Management</div></div>
+  </div>
+  <div class="sb-group">Overview</div>
+  <button class="sb-item active" onclick="go('dashboard',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="sb-item" onclick="go('submissions',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Submissions
+  </button>
+  <div class="sb-group">Content</div>
+  <button class="sb-item" onclick="go('locations',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Locations
+  </button>
+  <button class="sb-item" onclick="go('machines',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Machines
+  </button>
+  <button class="sb-item" onclick="go('products',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    Products
+  </button>
+  <button class="sb-item" onclick="go('faqs',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    FAQs
+  </button>
+  <button class="sb-item" onclick="go('partners',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Partners
+  </button>
+  <div class="sb-group">Site</div>
+  <button class="sb-item" onclick="go('stats',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Stats
+  </button>
+  <button class="sb-item" onclick="go('settings',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+  <button class="sb-item" onclick="go('images',this)">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    Images
+  </button>
+  <div class="sb-bottom">
+    <button class="sb-item" onclick="window.open('/','_blank')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      View Website
+    </button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="pg-title"><h1>Dashboard</h1><p>Live overview of your WYT website</p></div>
+  <div class="stat-row">
+    <div class="sc"><div class="sc-icon" style="background:#f0f0ec"><svg width="18" height="18" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="sc-val" id="d-subs">—</div><div class="sc-lbl">Submissions</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#f0fdf4"><svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sc-val" id="d-today">—</div><div class="sc-lbl">Today</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#f0f0ec"><svg width="18" height="18" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="sc-val" id="d-locs">—</div><div class="sc-lbl">Locations</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#f0f0ec"><svg width="18" height="18" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="sc-val" id="d-mach">—</div><div class="sc-lbl">Machines</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#f0f0ec"><svg width="18" height="18" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="sc-val" id="d-faqs">—</div><div class="sc-lbl">FAQs</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#f0f0ec"><svg width="18" height="18" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div><div class="sc-val" id="d-imgs">—</div><div class="sc-lbl">Images</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Recent Submissions</h3><button class="btn btn-ghost btn-sm" onclick="go('submissions',null)">View all</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Interest</th><th>Status</th></tr></thead><tbody id="d-recent"></tbody></table></div>
+  </div>
+</div>
+
+<!-- SUBMISSIONS -->
+<div class="page" id="page-submissions">
+  <div class="pg-title"><h1>Submissions</h1><p>Every contact form submission</p></div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <a class="btn btn-dark" id="export-btn" href="#" download>
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </a>
+    <button class="btn btn-ghost" onclick="loadSubs()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Interest</th><th>Message</th><th>Status</th><th>Actions</th></tr></thead><tbody id="subs-body"></tbody></table></div>
+  </div>
+</div>
+
+<!-- LOCATIONS -->
+<div class="page" id="page-locations">
+  <div class="pg-title"><h1>Locations</h1><p>Manage where WYT machines are placed</p></div>
+  <div class="alert alert-ok" id="loc-ok"></div>
+  <div class="alert alert-err" id="loc-err"></div>
+  <div class="card">
+    <div class="card-head"><h3>Add New Location</h3></div>
+    <div class="card-body">
+      <form id="loc-form" onsubmit="addLocation(event)">
+        <div class="form-grid">
+          <div class="ff"><label>Location Name</label><input name="name" placeholder="Orascom HQ, Cairo" required/></div>
+          <div class="ff"><label>Arabic Name</label><input name="nameAr" placeholder="مقر أوراسكوم، القاهرة"/></div>
+          <div class="ff"><label>Type</label><select name="type"><option>Corporate Office</option><option>Gym</option><option>Hospital</option><option>University</option><option>Hotel</option><option>Factory</option><option>School</option><option>Mall</option><option>Other</option></select></div>
+          <div class="ff"><label>Arabic Type</label><input name="typeAr" placeholder="مكتب شركة"/></div>
+          <div class="ff"><label>Machine Model</label><select name="machine"><option>WYT Pro 500</option><option>WYT Brew Station</option><option>WYT Fresh</option><option>WYT Compact</option></select></div>
+          <div class="ff"><label>Area / Floor</label><input name="area" placeholder="Main lobby, Reception…"/></div>
+          <div class="ff"><label>Arabic Area</label><input name="areaAr" placeholder="الردهة الرئيسية"/></div>
+          <div class="ff"><label>Image URL <span class="hint">(or upload below)</span></label><input name="imageUrl" id="loc-url" placeholder="https://…"/></div>
+        </div>
+        <div class="divider"></div>
+        <div class="ff" style="margin-bottom:16px">
+          <label>Upload Location Photo</label>
+          <div class="dz" onclick="document.getElementById('loc-file').click()">
+            <div class="dz-icon"><svg width="20" height="20" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+            <strong>Click to upload a photo</strong><p>JPG, PNG or WEBP — max 8MB</p>
+            <input type="file" id="loc-file" name="image" accept="image/*" style="display:none" onchange="showPreview(this,'loc-prev-box','loc-prev-img')"/>
+          </div>
+          <div class="img-prev-box" id="loc-prev-box"><img id="loc-prev-img"/></div>
+        </div>
+        <button type="submit" class="btn btn-dark">Add Location</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All Locations</h3><span id="loc-count"></span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Photo</th><th>Name</th><th>Type</th><th>Machine</th><th>Area</th><th>Featured</th><th>Action</th></tr></thead><tbody id="locs-body"></tbody></table></div>
+  </div>
+</div>
+
+<!-- MACHINES -->
+<div class="page" id="page-machines">
+  <div class="pg-title"><h1>Machines</h1><p>Vending machine models displayed on the website</p></div>
+  <div class="alert alert-ok" id="mach-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Add New Machine Model</h3></div>
+    <div class="card-body">
+      <form id="mach-form" onsubmit="addMachine(event)">
+        <div class="form-grid">
+          <div class="ff"><label>Machine Name</label><input name="name" placeholder="WYT Pro 500" required/></div>
+          <div class="ff"><label>Arabic Name</label><input name="nameAr" placeholder="WYT Pro 500"/></div>
+          <div class="ff"><label>Badge <span class="hint">(e.g. Best Seller, New)</span></label><input name="badge" placeholder="Best Seller"/></div>
+          <div class="ff"><label>Arabic Badge</label><input name="badgeAr" placeholder="الأكثر مبيعاً"/></div>
+          <div class="ff"><label>Description</label><textarea name="desc" placeholder="Full-size combo machine…"></textarea></div>
+          <div class="ff"><label>Arabic Description</label><textarea name="descAr" placeholder="ماكينة كاملة…"></textarea></div>
+        </div>
+        <div class="ff" style="margin-bottom:16px">
+          <label>Machine Photo</label>
+          <div class="dz" onclick="document.getElementById('mach-file').click()">
+            <div class="dz-icon"><svg width="20" height="20" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <strong>Click to upload machine photo</strong><p>JPG, PNG — max 8MB</p>
+            <input type="file" id="mach-file" name="image" accept="image/*" style="display:none" onchange="showPreview(this,'mach-prev-box','mach-prev-img')"/>
+          </div>
+          <div class="img-prev-box" id="mach-prev-box"><img id="mach-prev-img"/></div>
+        </div>
+        <div class="ff" style="margin-bottom:16px">
+          <label>Specifications <span class="hint">— one per line, format: Label | Value</span></label>
+          <textarea id="mach-specs" rows="5" placeholder="Dimensions | 180 x 90 x 80 cm&#10;Capacity | 60 product slots&#10;Display | 15 inch HD Touchscreen&#10;Payments | Card, NFC, Apple Pay&#10;Connectivity | 4G + WiFi"></textarea>
+        </div>
+        <button type="submit" class="btn btn-dark">Add Machine</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All Machines</h3></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Photo</th><th>Name</th><th>Badge</th><th>Description</th><th>Specs</th><th>Action</th></tr></thead><tbody id="mach-body"></tbody></table></div>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="page" id="page-products">
+  <div class="pg-title"><h1>Products</h1><p>Product categories shown on the website</p></div>
+  <div class="alert alert-ok" id="prod-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Add Product Category</h3></div>
+    <div class="card-body">
+      <form id="prod-form" onsubmit="addProduct(event)">
+        <div class="form-grid">
+          <div class="ff"><label>Category Name</label><input name="name" placeholder="Snacks & Sweets" required/></div>
+          <div class="ff"><label>Arabic Name</label><input name="nameAr" placeholder="وجبات خفيفة وحلويات"/></div>
+          <div class="ff"><label>Description</label><textarea name="desc" placeholder="Chips, chocolates…"></textarea></div>
+          <div class="ff"><label>Arabic Description</label><textarea name="descAr" placeholder="شيبس وشوكولاتة…"></textarea></div>
+          <div class="ff"><label>Items <span class="hint">(comma separated)</span></label><input name="items" placeholder="Lays, Kit Kat, Oreos"/></div>
+          <div class="ff"><label>Image URL <span class="hint">(or upload)</span></label><input name="imageUrl" placeholder="https://…"/></div>
+        </div>
+        <div class="ff" style="margin:16px 0">
+          <label>Or Upload Photo</label>
+          <div class="dz" onclick="document.getElementById('prod-file').click()">
+            <div class="dz-icon"><svg width="20" height="20" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+            <strong>Upload product photo</strong><p>JPG, PNG — max 8MB</p>
+            <input type="file" id="prod-file" name="image" accept="image/*" style="display:none" onchange="showPreview(this,'prod-prev-box','prod-prev-img')"/>
+          </div>
+          <div class="img-prev-box" id="prod-prev-box"><img id="prod-prev-img"/></div>
+        </div>
+        <button type="submit" class="btn btn-dark">Add Product</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All Products</h3></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Photo</th><th>Name</th><th>Description</th><th>Items</th><th>Action</th></tr></thead><tbody id="prod-body"></tbody></table></div>
+  </div>
+</div>
+
+<!-- FAQs -->
+<div class="page" id="page-faqs">
+  <div class="pg-title"><h1>FAQs</h1><p>Frequently asked questions shown on the website</p></div>
+  <div class="alert alert-ok" id="faq-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Add New FAQ</h3></div>
+    <div class="card-body">
+      <form id="faq-form" onsubmit="addFaq(event)">
+        <div class="form-grid">
+          <div class="ff"><label>Question (English)</label><input name="q" placeholder="Is there really no cost?" required/></div>
+          <div class="ff"><label>Arabic Question</label><input name="qAr" placeholder="هل لا توجد تكلفة؟"/></div>
+          <div class="ff"><label>Answer (English)</label><textarea name="a" placeholder="Yes — WYT covers 100%…" required></textarea></div>
+          <div class="ff"><label>Arabic Answer</label><textarea name="aAr" placeholder="نعم — WYT تتحمل 100%…"></textarea></div>
+        </div>
+        <button type="submit" class="btn btn-dark" style="margin-top:4px">Add FAQ</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All FAQs</h3><span id="faq-count" style="font-size:12px;color:#9ca3af"></span></div>
+    <div class="card-body" id="faqs-list" style="display:flex;flex-direction:column;gap:8px;min-height:40px"></div>
+  </div>
+</div>
+
+<!-- PARTNERS -->
+<div class="page" id="page-partners">
+  <div class="pg-title"><h1>Partners</h1><p>The trusted-by logos shown on the website</p></div>
+  <div class="alert alert-ok" id="part-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Add Partner Logo</h3></div>
+    <div class="card-body">
+      <form id="part-form" onsubmit="addPartner(event)">
+        <div class="form-grid">
+          <div class="ff"><label>Company Name</label><input name="name" placeholder="GymNation" required/></div>
+          <div class="ff"><label>Initials <span class="hint">(2 letters)</span></label><input name="initials" placeholder="GN" maxlength="2" required/></div>
+          <div class="ff"><label>Text Color</label><input type="color" name="color" value="#1a6fa8"/></div>
+          <div class="ff"><label>Background Color</label><input type="color" name="bg" value="#e8f4fd"/></div>
+        </div>
+        <button type="submit" class="btn btn-dark" style="margin-top:4px">Add Partner</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All Partners</h3></div>
+    <div class="card-body"><div id="parts-list" style="display:flex;flex-wrap:wrap;gap:8px;min-height:44px"></div></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div class="pg-title"><h1>Stats & Numbers</h1><p>The animated counters on the hero section</p></div>
+  <div class="alert alert-ok" id="stats-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Edit Counter Values</h3></div>
+    <div class="card-body">
+      <form onsubmit="saveStats(event)">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div><p style="font-size:11px;font-weight:700;color:#111318;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Machines Deployed</p>
+            <div class="ff" style="margin-bottom:10px"><label>Number</label><input id="s-mach-val" type="number" placeholder="500"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Suffix</label><input id="s-mach-suf" placeholder="+"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Label (English)</label><input id="s-mach-lbl" placeholder="Machines Deployed"/></div>
+            <div class="ff"><label>Label (Arabic)</label><input id="s-mach-ar" placeholder="ماكينة منتشرة"/></div>
+          </div>
+          <div><p style="font-size:11px;font-weight:700;color:#111318;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Partner Locations</p>
+            <div class="ff" style="margin-bottom:10px"><label>Number</label><input id="s-loc-val" type="number" placeholder="120"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Suffix</label><input id="s-loc-suf" placeholder="+"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Label (English)</label><input id="s-loc-lbl" placeholder="Partner Locations"/></div>
+            <div class="ff"><label>Label (Arabic)</label><input id="s-loc-ar" placeholder="موقع شريك"/></div>
+          </div>
+          <div><p style="font-size:11px;font-weight:700;color:#111318;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Uptime</p>
+            <div class="ff" style="margin-bottom:10px"><label>Number</label><input id="s-up-val" type="number" placeholder="98"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Suffix</label><input id="s-up-suf" placeholder="%"/></div>
+            <div class="ff" style="margin-bottom:10px"><label>Label (English)</label><input id="s-up-lbl" placeholder="Uptime"/></div>
+            <div class="ff"><label>Label (Arabic)</label><input id="s-up-ar" placeholder="وقت تشغيل"/></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <button type="submit" class="btn btn-dark">Save Stats</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="pg-title"><h1>Settings</h1><p>Contact info shown on the website</p></div>
+  <div class="alert alert-ok" id="set-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Company & Contact Info</h3></div>
+    <div class="card-body">
+      <form onsubmit="saveSettings(event)">
+        <div class="form-grid">
+          <div class="ff"><label>WhatsApp Number <span class="hint">(no +, with country code)</span></label><input id="set-wa" placeholder="201009999632"/></div>
+          <div class="ff"><label>Email Address</label><input id="set-email" type="email" placeholder="hello@wyt.eg"/></div>
+          <div class="ff"><label>Phone Number</label><input id="set-phone" placeholder="+20 10…"/></div>
+          <div class="ff"><label>Address (English)</label><input id="set-addr" placeholder="Cairo, Egypt"/></div>
+          <div class="ff"><label>Address (Arabic)</label><input id="set-addrAr" placeholder="القاهرة، مصر"/></div>
+          <div class="ff"><label>Working Hours (English)</label><input id="set-hours" placeholder="Sun–Thu, 9AM – 5PM"/></div>
+          <div class="ff"><label>Working Hours (Arabic)</label><input id="set-hoursAr" placeholder="الأحد–الخميس، 9ص – 5م"/></div>
+        </div>
+        <div class="divider"></div>
+        <button type="submit" class="btn btn-dark">Save Settings</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGES -->
+<div class="page" id="page-images">
+  <div class="pg-title"><h1>Image Library</h1><p>Upload and manage all images</p></div>
+  <div class="alert alert-ok" id="img-ok"></div>
+  <div class="card">
+    <div class="card-head"><h3>Upload New Image</h3></div>
+    <div class="card-body">
+      <form id="img-form" onsubmit="uploadImg(event)">
+        <div class="dz" onclick="document.getElementById('img-file').click()" style="max-width:500px">
+          <div class="dz-icon"><svg width="20" height="20" fill="none" stroke="#111318" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+          <strong>Click to select an image</strong><p>JPG, PNG, WEBP — max 8MB</p>
+          <input type="file" id="img-file" name="image" accept="image/*" style="display:none" onchange="showPreview(this,'img-prev-box','img-prev-img')"/>
+        </div>
+        <div class="img-prev-box" id="img-prev-box" style="max-width:500px"><img id="img-prev-img"/></div>
+        <button type="submit" class="btn btn-dark" style="margin-top:14px">Upload Image</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>All Uploaded Images</h3><span id="img-count" style="font-size:12px;color:#9ca3af"></span></div>
+    <div class="card-body"><div class="img-grid" id="img-grid"></div></div>
+  </div>
+</div>
+
+</main>
+<script>
+var PASS = new URLSearchParams(location.search).get('pass') || '';
+
+/* ─── API ─── */
+function api(url, opts) {
+  opts = opts || {};
+  var sep = url.includes('?') ? '&' : '?';
+  var h = {'x-admin-pass': PASS};
+  if (!(opts.body instanceof FormData)) h['Content-Type'] = 'application/json';
+  return fetch(url + sep + 'pass=' + PASS, Object.assign({}, opts, {headers: Object.assign(h, opts.headers||{})}))
+    .then(function(r){ return r.json(); })
+    .catch(function(){ return {}; });
+}
+
+/* ─── Navigation ─── */
+function go(page, el) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.sb-item').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('page-' + page).classList.add('active');
+  if (el) el.classList.add('active');
+  ({
+    dashboard: loadDash, submissions: loadSubs, locations: loadLocs,
+    machines: loadMachs, products: loadProds, faqs: loadFaqs,
+    partners: loadParts, stats: loadStats, settings: loadSettings, images: loadImgs
+  })[page]();
+}
+
+/* ─── Alert ─── */
+function flash(id, msg, isErr) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg; el.style.display = 'block';
+  el.className = 'alert ' + (isErr ? 'alert-err' : 'alert-ok');
+  setTimeout(function(){ el.style.display = 'none'; }, 4000);
+}
+
+/* ─── Image preview ─── */
+function showPreview(input, boxId, imgId) {
+  var box = document.getElementById(boxId), img = document.getElementById(imgId);
+  if (!input.files[0]) { box.style.display = 'none'; return; }
+  var r = new FileReader();
+  r.onload = function(e) { img.src = e.target.result; box.style.display = 'block'; };
+  r.readAsDataURL(input.files[0]);
+}
+
+/* ─── Helpers ─── */
+function str(v) { return v || ''; }
+function sub(v, n) { return str(v).substring(0, n); }
+function esc(v) { return str(v).replace(/'/g, "\\'"); }
+function statusBadge(s) {
+  var cls = s === 'new' ? 'bdg-dark' : (s === 'read' ? 'bdg-green' : 'bdg-gray');
+  return '<span class="bdg ' + cls + '">' + str(s) + '</span>';
+}
+
+/* ═══ DASHBOARD ═══ */
+function loadDash() {
+  Promise.all([api('/api/admin/submissions'), api('/api/content'), api('/api/admin/uploads')]).then(function(res) {
+    var subs = res[0], c = res[1], imgs = res[2];
+    var today = new Date().toDateString();
+    document.getElementById('d-subs').textContent  = Array.isArray(subs) ? subs.length : 0;
+    document.getElementById('d-today').textContent = Array.isArray(subs) ? subs.filter(function(s){ return new Date(s.submittedAt).toDateString() === today; }).length : 0;
+    document.getElementById('d-locs').textContent  = (c.locations||[]).length;
+    document.getElementById('d-mach').textContent  = (c.machines||[]).length;
+    document.getElementById('d-faqs').textContent  = (c.faqs||[]).length;
+    document.getElementById('d-imgs').textContent  = Array.isArray(imgs) ? imgs.length : 0;
+    var recent = Array.isArray(subs) ? subs.slice(0, 6) : [];
+    document.getElementById('d-recent').innerHTML = recent.map(function(s) {
+      return '<tr>'
+        + '<td style="color:#9ca3af;white-space:nowrap">' + new Date(s.submittedAt).toLocaleDateString('en-GB') + '</td>'
+        + '<td><strong>' + str(s.fullName) + '</strong></td>'
+        + '<td>' + str(s.email) + '</td>'
+        + '<td style="max-width:140px">' + str(s.interest) + '</td>'
+        + '<td>' + statusBadge(s.status||'new') + '</td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="5" class="empty-td">No submissions yet</td></tr>';
+  });
+}
+
+/* ═══ SUBMISSIONS ═══ */
+function loadSubs() {
+  document.getElementById('export-btn').href = '/api/admin/export?pass=' + PASS;
+  api('/api/admin/submissions').then(function(subs) {
+    document.getElementById('subs-body').innerHTML = (Array.isArray(subs) ? subs : []).map(function(s) {
+      var msg = sub(s.message, 50) + (str(s.message).length > 50 ? '…' : '');
+      return '<tr>'
+        + '<td style="color:#9ca3af;white-space:nowrap;font-size:12px">' + new Date(s.submittedAt).toLocaleDateString('en-GB') + '</td>'
+        + '<td><strong>' + str(s.fullName) + '</strong></td>'
+        + '<td><a href="mailto:' + str(s.email) + '" style="color:#111318">' + str(s.email) + '</a></td>'
+        + '<td>' + str(s.phone) + '</td>'
+        + '<td style="max-width:120px">' + str(s.interest) + '</td>'
+        + '<td style="max-width:160px;color:#6b7280;font-size:12px">' + msg + '</td>'
+        + '<td>' + statusBadge(s.status||'new') + '</td>'
+        + '<td><div style="display:flex;gap:4px">'
+        + '<button class="btn btn-success btn-sm" onclick="markRead(\'' + esc(s._id) + '\')">Read</button>'
+        + '<button class="btn btn-danger btn-sm" onclick="delSub(\'' + esc(s._id) + '\')">Delete</button>'
+        + '</div></td></tr>';
+    }).join('') || '<tr><td colspan="8" class="empty-td">No submissions yet</td></tr>';
+  });
+}
+function markRead(id) {
+  api('/api/admin/submissions/' + id + '/status', {method:'PUT', body:JSON.stringify({status:'read'})}).then(loadSubs);
+}
+function delSub(id) {
+  if (!confirm('Delete this submission?')) return;
+  api('/api/admin/submissions/' + id, {method:'DELETE'}).then(loadSubs);
+}
+
+/* ═══ LOCATIONS ═══ */
+function loadLocs() {
+  api('/api/content').then(function(c) {
+    var locs = c.locations || [];
+    document.getElementById('loc-count').textContent = locs.length + ' location(s)';
+    document.getElementById('locs-body').innerHTML = locs.map(function(l) {
+      var featCell = l.featured
+        ? '<span class="bdg bdg-green">Featured</span>'
+        : '<button class="btn btn-ghost btn-sm" onclick="setFeat(\'' + esc(l._id) + '\')">Set Featured</button>';
+      return '<tr>'
+        + '<td><img src="' + str(l.image) + '" class="thumb" onerror="this.src=\'machine.jfif\'"/></td>'
+        + '<td><strong>' + str(l.name) + '</strong><br/><span style="font-size:11px;color:#9ca3af">' + str(l.nameAr) + '</span></td>'
+        + '<td><span class="bdg bdg-gray">' + str(l.type) + '</span></td>'
+        + '<td>' + str(l.machine) + '</td>'
+        + '<td style="font-size:12px;color:#6b7280">' + str(l.area) + '</td>'
+        + '<td>' + featCell + '</td>'
+        + '<td><button class="btn btn-danger btn-sm" onclick="delLoc(\'' + esc(l._id) + '\')">Delete</button></td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="7" class="empty-td">No locations yet</td></tr>';
+  });
+}
+function addLocation(e) {
+  e.preventDefault();
+  var fd = new FormData(document.getElementById('loc-form'));
+  if (!document.getElementById('loc-file').files[0] && !document.getElementById('loc-url').value) {
+    flash('loc-err', 'Please provide an image URL or upload a photo.', true); return;
+  }
+  fetch('/api/admin/locations?pass=' + PASS, {method:'POST', headers:{'x-admin-pass':PASS}, body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      if (res._id || res.success !== false) {
+        flash('loc-ok', 'Location added! Website updated.');
+        document.getElementById('loc-form').reset();
+        document.getElementById('loc-prev-box').style.display = 'none';
+        loadLocs();
+      } else { flash('loc-err', 'Failed: ' + JSON.stringify(res), true); }
+    });
+}
+function delLoc(id) {
+  if (!confirm('Delete this location?')) return;
+  api('/api/admin/locations/' + id, {method:'DELETE'}).then(function(){ flash('loc-ok','Deleted. Website updated.'); loadLocs(); });
+}
+function setFeat(id) {
+  api('/api/admin/locations/' + id + '/feature', {method:'PUT'}).then(loadLocs);
+}
+
+/* ═══ MACHINES ═══ */
+function loadMachs() {
+  api('/api/content').then(function(c) {
+    document.getElementById('mach-body').innerHTML = (c.machines||[]).map(function(m) {
+      var badge = m.badge ? '<span class="bdg bdg-dark">' + str(m.badge) + '</span>' : '—';
+      return '<tr>'
+        + '<td><img src="' + str(m.image||'machine.jfif') + '" class="thumb" onerror="this.src=\'machine.jfif\'"/></td>'
+        + '<td><strong>' + str(m.name) + '</strong></td>'
+        + '<td>' + badge + '</td>'
+        + '<td style="max-width:180px;font-size:12px;color:#6b7280">' + sub(m.desc,60) + '…</td>'
+        + '<td style="font-size:12px;color:#9ca3af">' + ((m.specs||[]).length) + ' specs</td>'
+        + '<td><button class="btn btn-danger btn-sm" onclick="delMach(\'' + esc(m._id) + '\')">Delete</button></td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="6" class="empty-td">No machines added</td></tr>';
+  });
+}
+function addMachine(e) {
+  e.preventDefault();
+  var fd = new FormData(document.getElementById('mach-form'));
+  var specsRaw = document.getElementById('mach-specs').value;
+  var specs = specsRaw.split('\n').filter(Boolean).map(function(line) {
+    var parts = line.split('|');
+    return {l: (parts[0]||'').trim(), v: (parts[1]||'').trim()};
+  });
+  fd.set('specs', JSON.stringify(specs));
+  fetch('/api/admin/machines?pass=' + PASS, {method:'POST', headers:{'x-admin-pass':PASS}, body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      if (res._id || res.success !== false) {
+        flash('mach-ok','Machine added! Website updated.');
+        document.getElementById('mach-form').reset();
+        document.getElementById('mach-prev-box').style.display = 'none';
+        document.getElementById('mach-specs').value = '';
+        loadMachs();
+      } else { flash('mach-ok','Failed: ' + JSON.stringify(res), true); }
+    });
+}
+function delMach(id) {
+  if (!confirm('Delete this machine?')) return;
+  api('/api/admin/machines/' + id, {method:'DELETE'}).then(loadMachs);
+}
+
+/* ═══ PRODUCTS ═══ */
+function loadProds() {
+  api('/api/content').then(function(c) {
+    document.getElementById('prod-body').innerHTML = (c.products||[]).map(function(p) {
+      var tags = (p.items||[]).map(function(i){ return '<span class="tag">' + i + '</span>'; }).join('');
+      return '<tr>'
+        + '<td><img src="' + str(p.image) + '" class="thumb" onerror="this.style.display=\'none\'"/></td>'
+        + '<td><strong>' + str(p.name) + '</strong></td>'
+        + '<td style="max-width:160px;font-size:12px;color:#6b7280">' + sub(p.desc,55) + '</td>'
+        + '<td>' + tags + '</td>'
+        + '<td><button class="btn btn-danger btn-sm" onclick="delProd(\'' + esc(p._id) + '\')">Delete</button></td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="5" class="empty-td">No products</td></tr>';
+  });
+}
+function addProduct(e) {
+  e.preventDefault();
+  var fd = new FormData(document.getElementById('prod-form'));
+  fetch('/api/admin/products?pass=' + PASS, {method:'POST', headers:{'x-admin-pass':PASS}, body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      if (res._id || res.success !== false) {
+        flash('prod-ok','Product added! Website updated.');
+        document.getElementById('prod-form').reset();
+        document.getElementById('prod-prev-box').style.display = 'none';
+        loadProds();
+      } else { flash('prod-ok','Failed: ' + JSON.stringify(res), true); }
+    });
+}
+function delProd(id) {
+  if (!confirm('Delete this product?')) return;
+  api('/api/admin/products/' + id, {method:'DELETE'}).then(loadProds);
+}
+
+/* ═══ FAQs ═══ */
+function loadFaqs() {
+  api('/api/content').then(function(c) {
+    var faqs = c.faqs || [];
+    document.getElementById('faq-count').textContent = faqs.length + ' question(s)';
+    document.getElementById('faqs-list').innerHTML = faqs.map(function(f) {
+      return '<div class="faq-row">'
+        + '<div style="flex:1">'
+        + '<p class="faq-q">' + str(f.q) + '</p>'
+        + (f.qAr ? '<p class="faq-qar">' + str(f.qAr) + '</p>' : '')
+        + '<p class="faq-a">' + str(f.a) + '</p>'
+        + '</div>'
+        + '<button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="delFaq(\'' + esc(f._id) + '\')">Delete</button>'
+        + '</div>';
+    }).join('') || '<div style="color:#d1d5db;font-size:13px">No FAQs yet</div>';
+  });
+}
+function addFaq(e) {
+  e.preventDefault();
+  var data = Object.fromEntries(new FormData(document.getElementById('faq-form')));
+  api('/api/admin/faqs', {method:'POST', body:JSON.stringify(data)}).then(function(res) {
+    if (res._id) {
+      flash('faq-ok','FAQ added! Website updated.');
+      document.getElementById('faq-form').reset(); loadFaqs();
+    } else { flash('faq-ok','Failed: ' + JSON.stringify(res), true); }
+  });
+}
+function delFaq(id) {
+  if (!confirm('Delete this FAQ?')) return;
+  api('/api/admin/faqs/' + id, {method:'DELETE'}).then(loadFaqs);
+}
+
+/* ═══ PARTNERS ═══ */
+function loadParts() {
+  api('/api/content').then(function(c) {
+    document.getElementById('parts-list').innerHTML = (c.partners||[]).map(function(p) {
+      return '<div class="p-chip">'
+        + '<div class="p-badge" style="background:' + str(p.bg) + ';color:' + str(p.color) + '">' + str(p.initials) + '</div>'
+        + '<span class="p-name">' + str(p.name) + '</span>'
+        + '<button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="delPart(\'' + esc(p._id) + '\')">✕</button>'
+        + '</div>';
+    }).join('') || '<span style="color:#d1d5db;font-size:13px">No partners yet</span>';
+  });
+}
+function addPartner(e) {
+  e.preventDefault();
+  var data = Object.fromEntries(new FormData(document.getElementById('part-form')));
+  api('/api/admin/partners', {method:'POST', body:JSON.stringify(data)}).then(function(res) {
+    if (res._id) {
+      flash('part-ok','Partner added! Website updated.');
+      document.getElementById('part-form').reset(); loadParts();
+    } else { flash('part-ok','Failed: ' + JSON.stringify(res), true); }
+  });
+}
+function delPart(id) {
+  if (!confirm('Remove partner?')) return;
+  api('/api/admin/partners/' + id, {method:'DELETE'}).then(loadParts);
+}
+
+/* ═══ STATS ═══ */
+function loadStats() {
+  api('/api/content').then(function(c) {
+    var s = c.stats || {};
+    document.getElementById('s-mach-val').value = (s.machines && s.machines.value)   || 500;
+    document.getElementById('s-mach-suf').value = (s.machines && s.machines.suffix)  || '+';
+    document.getElementById('s-mach-lbl').value = (s.machines && s.machines.label)   || 'Machines Deployed';
+    document.getElementById('s-mach-ar').value  = (s.machines && s.machines.labelAr) || '';
+    document.getElementById('s-loc-val').value  = (s.locations && s.locations.value)   || 120;
+    document.getElementById('s-loc-suf').value  = (s.locations && s.locations.suffix)  || '+';
+    document.getElementById('s-loc-lbl').value  = (s.locations && s.locations.label)   || 'Partner Locations';
+    document.getElementById('s-loc-ar').value   = (s.locations && s.locations.labelAr) || '';
+    document.getElementById('s-up-val').value   = (s.uptime && s.uptime.value)   || 98;
+    document.getElementById('s-up-suf').value   = (s.uptime && s.uptime.suffix)  || '%';
+    document.getElementById('s-up-lbl').value   = (s.uptime && s.uptime.label)   || 'Uptime';
+    document.getElementById('s-up-ar').value    = (s.uptime && s.uptime.labelAr) || '';
+  });
+}
+function saveStats(e) {
+  e.preventDefault();
+  var data = {
+    machines:  {value:+document.getElementById('s-mach-val').value, suffix:document.getElementById('s-mach-suf').value, label:document.getElementById('s-mach-lbl').value, labelAr:document.getElementById('s-mach-ar').value},
+    locations: {value:+document.getElementById('s-loc-val').value,  suffix:document.getElementById('s-loc-suf').value,  label:document.getElementById('s-loc-lbl').value,  labelAr:document.getElementById('s-loc-ar').value},
+    uptime:    {value:+document.getElementById('s-up-val').value,   suffix:document.getElementById('s-up-suf').value,   label:document.getElementById('s-up-lbl').value,   labelAr:document.getElementById('s-up-ar').value}
+  };
+  api('/api/admin/stats', {method:'PUT', body:JSON.stringify(data)}).then(function(){ flash('stats-ok','Stats saved! Website updates automatically.'); });
+}
+
+/* ═══ SETTINGS ═══ */
+function loadSettings() {
+  api('/api/content').then(function(c) {
+    var s = c.settings || {};
+    document.getElementById('set-wa').value      = s.whatsapp  || '';
+    document.getElementById('set-email').value   = s.email     || '';
+    document.getElementById('set-phone').value   = s.phone     || '';
+    document.getElementById('set-addr').value    = s.address   || '';
+    document.getElementById('set-addrAr').value  = s.addressAr || '';
+    document.getElementById('set-hours').value   = s.hours     || '';
+    document.getElementById('set-hoursAr').value = s.hoursAr   || '';
+  });
+}
+function saveSettings(e) {
+  e.preventDefault();
+  var data = {
+    whatsapp: document.getElementById('set-wa').value,
+    email:    document.getElementById('set-email').value,
+    phone:    document.getElementById('set-phone').value,
+    address:  document.getElementById('set-addr').value,
+    addressAr:document.getElementById('set-addrAr').value,
+    hours:    document.getElementById('set-hours').value,
+    hoursAr:  document.getElementById('set-hoursAr').value
+  };
+  api('/api/admin/settings', {method:'PUT', body:JSON.stringify(data)}).then(function(){ flash('set-ok','Settings saved! Website updates automatically.'); });
+}
+
+/* ═══ IMAGES ═══ */
+function loadImgs() {
+  api('/api/admin/uploads').then(function(imgs) {
+    var arr = Array.isArray(imgs) ? imgs : [];
+    document.getElementById('img-count').textContent = arr.length + ' image(s)';
+    document.getElementById('img-grid').innerHTML = arr.map(function(img) {
+      return '<div class="img-card">'
+        + '<img src="' + img.url + '" loading="lazy" onerror="this.style.background=\'#eee\'"/>'
+        + '<div class="img-card-foot">'
+        + '<p class="img-name">' + img.name + '</p>'
+        + '<div style="display:flex;gap:6px">'
+        + '<button class="btn btn-ghost btn-sm" onclick="copyUrl(\'' + img.url + '\')">Copy URL</button>'
+        + '<button class="btn btn-danger btn-sm" onclick="delImg(\'' + esc(img.name) + '\')">Delete</button>'
+        + '</div></div></div>';
+    }).join('') || '<div style="color:#d1d5db;font-size:13px;padding:20px">No images uploaded yet</div>';
+  });
+}
+function uploadImg(e) {
+  e.preventDefault();
+  var fd = new FormData(document.getElementById('img-form'));
+  fetch('/api/admin/upload?pass=' + PASS, {method:'POST', headers:{'x-admin-pass':PASS}, body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      if (res.success || res.url) {
+        flash('img-ok','Image uploaded!');
+        document.getElementById('img-form').reset();
+        document.getElementById('img-prev-box').style.display = 'none';
+        loadImgs();
+      } else { flash('img-ok','Upload failed.', true); }
+    });
+}
+function delImg(filename) {
+  if (!confirm('Delete this image?')) return;
+  api('/api/admin/uploads/' + filename, {method:'DELETE'}).then(function(){ flash('img-ok','Deleted.'); loadImgs(); });
+}
+function copyUrl(url) {
+  navigator.clipboard.writeText(window.location.origin + '/' + url)
+    .then(function(){ alert('URL copied!\n' + window.location.origin + '/' + url); });
+}
+
+loadDash();
+</script>
+</body>
+</html>
