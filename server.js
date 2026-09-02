@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,10 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from root directory
-app.use(express.static(__dirname));
+// Serve files from the public folder
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Database connection
+// Database Connection for API endpoints only
 let isConnected = false;
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
@@ -76,20 +75,12 @@ function checkAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: 'Unauthorized access' });
 }
 
-/* ─── HTML Page Routes ─── */
+/* ─── Route for Admin Page ─── */
 app.get('/admin', (req, res) => {
-  const admin2Path = path.join(__dirname, 'admin_2.html');
-  const adminPath = path.join(__dirname, 'admin.html');
-
-  if (fs.existsSync(admin2Path)) {
-    return res.sendFile(admin2Path);
-  } else if (fs.existsSync(adminPath)) {
-    return res.sendFile(adminPath);
-  }
-  res.status(404).send('Admin HTML file not found.');
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-/* ─── API Routes ─── */
+/* ─── API Endpoints ─── */
 app.get('/api/content', async (req, res) => {
   try {
     const locations = await Location.find();
