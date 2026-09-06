@@ -58,6 +58,7 @@ tbody tr:hover td{background:#fafaf8}
 
 /* ── Form ── */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.form-grid.cols3{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:20px}
 .form-grid.cols1{grid-template-columns:1fr}
 .ff{display:flex;flex-direction:column;gap:5px}
 .ff label{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;text-transform:uppercase}
@@ -121,10 +122,10 @@ tbody tr:hover td{background:#fafaf8}
 .tag{background:#f4f5f7;border-radius:99px;padding:2px 9px;font-size:11px;color:#6b7280;display:inline-block;margin:2px}
 
 @media(max-width:900px){
-  .sb{width:100%;height:54px;flex-direction:row;position:fixed;bottom:0;top:auto;overflow-x:auto;overflow-y:hidden;align-items:center;padding:0 8px}
-  .sb-logo,.sb-group{display:none}
-  .main{margin-left:0;padding:16px;padding-bottom:70px}
-  .sb-item{padding:8px 10px;flex-direction:column;font-size:9px;gap:2px;border-radius:0;margin:0;min-width:54px;text-align:center;box-shadow:none}
+  .sb{width:100%;height:56px;flex-direction:row;position:fixed;bottom:0;top:auto;overflow-x:auto;overflow-y:hidden;align-items:center;padding:0 8px;box-shadow:0 -2px 10px rgba(0,0,0,.1)}
+  .sb-logo,.sb-group,.sb-bottom{display:none}
+  .main{margin-left:0;padding:16px;padding-bottom:80px}
+  .sb-item{padding:8px 10px;flex-direction:column;font-size:9px;gap:2px;border-radius:0;margin:0;min-width:60px;text-align:center;box-shadow:none;flex-shrink:0}
   .sb-item.active{box-shadow:inset 0 3px 0 rgba(255,255,255,.6)}
   .form-grid{grid-template-columns:1fr}
   .stat-row{grid-template-columns:1fr 1fr}
@@ -269,6 +270,7 @@ tbody tr:hover td{background:#fafaf8}
 <div class="page" id="page-machines">
   <div class="pg-title"><h1>Machines</h1><p>Vending machine models displayed on the website</p></div>
   <div class="alert alert-ok" id="mach-ok"></div>
+  <div class="alert alert-err" id="mach-err"></div>
   <div class="card">
     <div class="card-head"><h3>Add New Machine Model</h3></div>
     <div class="card-body">
@@ -308,6 +310,7 @@ tbody tr:hover td{background:#fafaf8}
 <div class="page" id="page-products">
   <div class="pg-title"><h1>Products</h1><p>Product categories shown on the website</p></div>
   <div class="alert alert-ok" id="prod-ok"></div>
+  <div class="alert alert-err" id="prod-err"></div>
   <div class="card">
     <div class="card-head"><h3>Add Product Category</h3></div>
     <div class="card-body">
@@ -343,6 +346,7 @@ tbody tr:hover td{background:#fafaf8}
 <div class="page" id="page-faqs">
   <div class="pg-title"><h1>FAQs</h1><p>Frequently asked questions shown on the website</p></div>
   <div class="alert alert-ok" id="faq-ok"></div>
+  <div class="alert alert-err" id="faq-err"></div>
   <div class="card">
     <div class="card-head"><h3>Add New FAQ</h3></div>
     <div class="card-body">
@@ -367,6 +371,7 @@ tbody tr:hover td{background:#fafaf8}
 <div class="page" id="page-partners">
   <div class="pg-title"><h1>Partners</h1><p>The trusted-by logos shown on the website</p></div>
   <div class="alert alert-ok" id="part-ok"></div>
+  <div class="alert alert-err" id="part-err"></div>
   <div class="card">
     <div class="card-head"><h3>Add Partner Logo</h3></div>
     <div class="card-body">
@@ -395,7 +400,7 @@ tbody tr:hover td{background:#fafaf8}
     <div class="card-head"><h3>Edit Counter Values</h3></div>
     <div class="card-body">
       <form onsubmit="saveStats(event)">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+        <div class="form-grid cols3">
           <div><p style="font-size:11px;font-weight:700;color:#111318;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Machines Deployed</p>
             <div class="ff" style="margin-bottom:10px"><label>Number</label><input id="s-mach-val" type="number" placeholder="500"/></div>
             <div class="ff" style="margin-bottom:10px"><label>Suffix</label><input id="s-mach-suf" placeholder="+"/></div>
@@ -450,6 +455,7 @@ tbody tr:hover td{background:#fafaf8}
 <div class="page" id="page-images">
   <div class="pg-title"><h1>Image Library</h1><p>Upload and manage all images</p></div>
   <div class="alert alert-ok" id="img-ok"></div>
+  <div class="alert alert-err" id="img-err"></div>
   <div class="card">
     <div class="card-head"><h3>Upload New Image</h3></div>
     <div class="card-body">
@@ -613,7 +619,7 @@ function addLocation(e) {
         document.getElementById('loc-form').reset();
         document.getElementById('loc-prev-box').style.display = 'none';
         loadLocs();
-      } else { flash('loc-err', 'Failed: ' + JSON.stringify(res), true); }
+      } else { flash('loc-err', 'Failed: ' + (res.error || JSON.stringify(res)), true); }
     });
 }
 function delLoc(id) {
@@ -658,7 +664,7 @@ function addMachine(e) {
         document.getElementById('mach-prev-box').style.display = 'none';
         document.getElementById('mach-specs').value = '';
         loadMachs();
-      } else { flash('mach-ok','Failed: ' + JSON.stringify(res), true); }
+      } else { flash('mach-err','Failed: ' + (res.error || JSON.stringify(res)), true); }
     });
 }
 function delMach(id) {
@@ -692,7 +698,7 @@ function addProduct(e) {
         document.getElementById('prod-form').reset();
         document.getElementById('prod-prev-box').style.display = 'none';
         loadProds();
-      } else { flash('prod-ok','Failed: ' + JSON.stringify(res), true); }
+      } else { flash('prod-err','Failed: ' + (res.error || JSON.stringify(res)), true); }
     });
 }
 function delProd(id) {
@@ -724,7 +730,7 @@ function addFaq(e) {
     if (res._id) {
       flash('faq-ok','FAQ added! Website updated.');
       document.getElementById('faq-form').reset(); loadFaqs();
-    } else { flash('faq-ok','Failed: ' + JSON.stringify(res), true); }
+    } else { flash('faq-err','Failed: ' + (res.error || JSON.stringify(res)), true); }
   });
 }
 function delFaq(id) {
@@ -751,7 +757,7 @@ function addPartner(e) {
     if (res._id) {
       flash('part-ok','Partner added! Website updated.');
       document.getElementById('part-form').reset(); loadParts();
-    } else { flash('part-ok','Failed: ' + JSON.stringify(res), true); }
+    } else { flash('part-err','Failed: ' + (res.error || JSON.stringify(res)), true); }
   });
 }
 function delPart(id) {
@@ -842,7 +848,7 @@ function uploadImg(e) {
         document.getElementById('img-form').reset();
         document.getElementById('img-prev-box').style.display = 'none';
         loadImgs();
-      } else { flash('img-ok','Upload failed.', true); }
+      } else { flash('img-err','Upload failed.', true); }
     });
 }
 function delImg(filename) {
