@@ -142,6 +142,31 @@ const handleUpload = async (req, res) => {
   }
 };
 
+function normalizeAdminContent(req) {
+  const body = { ...(req.body || {}) };
+  const file = (req.files || []).find(item => item.fieldname === 'image');
+
+  if (file) {
+    body.image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+  } else if (body.imageUrl) {
+    body.image = body.imageUrl;
+  }
+  delete body.imageUrl;
+
+  if (typeof body.specs === 'string') {
+    try {
+      body.specs = JSON.parse(body.specs);
+    } catch {
+      body.specs = [];
+    }
+  }
+  if (typeof body.items === 'string') {
+    body.items = body.items.split(',').map(item => item.trim()).filter(Boolean);
+  }
+
+  return body;
+}
+
 app.post('/api/admin/uploads', checkAdminAuth, upload.any(), handleUpload);
 app.post('/api/admin/upload', checkAdminAuth, upload.any(), handleUpload);
 
@@ -220,9 +245,9 @@ app.get('/api/admin/locations', checkAdminAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/locations', checkAdminAuth, async (req, res) => {
+app.post('/api/admin/locations', checkAdminAuth, upload.any(), async (req, res) => {
   try {
-    const loc = new Location(req.body);
+    const loc = new Location(normalizeAdminContent(req));
     await loc.save();
     res.json(loc);
   } catch (err) {
@@ -270,9 +295,9 @@ app.get('/api/admin/machines', checkAdminAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/machines', checkAdminAuth, async (req, res) => {
+app.post('/api/admin/machines', checkAdminAuth, upload.any(), async (req, res) => {
   try {
-    const mach = new Machine(req.body);
+    const mach = new Machine(normalizeAdminContent(req));
     await mach.save();
     res.json(mach);
   } catch (err) {
@@ -308,9 +333,9 @@ app.get('/api/admin/products', checkAdminAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/products', checkAdminAuth, async (req, res) => {
+app.post('/api/admin/products', checkAdminAuth, upload.any(), async (req, res) => {
   try {
-    const prod = new Product(req.body);
+    const prod = new Product(normalizeAdminContent(req));
     await prod.save();
     res.json(prod);
   } catch (err) {
