@@ -3,14 +3,23 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS || 'Wyt11223344$$';
 
+// Configure Multer in-memory storage (Vercel read-only filesystem compatible)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 } // 8MB max image size
+});
+
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Increased limit to handle Base64 image payload strings
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve all static assets from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -85,6 +94,26 @@ app.get('/', (req, res) => {
 });
 
 /* ─── API Endpoints ─── */
+
+// SSE/Events endpoint to resolve console 404 errors from polling
+app.get('/api/events', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Image upload handler converting files into Base64 data URLs
+app.post('/api/admin/uploads', checkAdminAuth, upload.any(), (req, res) => {
+  try {
+    const file = req.file || (req.files && req.files[0]);
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    res.json({ success: true, url: base64Image });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/content', async (req, res) => {
   try {
     const locations = await Location.find();
