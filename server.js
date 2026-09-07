@@ -9,22 +9,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS || 'Wyt11223344$$';
 
-// Configure Multer in-memory storage (Vercel read-only filesystem compatible)
+// Multer memory storage configuration (Vercel & serverless friendly)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 } // 8MB max image size
+  limits: { fileSize: 8 * 1024 * 1024 } // 8MB limit
 });
 
 app.use(cors());
-
-// Increased limit to handle Base64 image payload strings
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve all static assets from the public directory
+// Serve static assets from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database connection middleware for API routes
+// Database Connection Middleware
 let isConnected = false;
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
@@ -77,6 +75,10 @@ const Stats = mongoose.models.Stats || mongoose.model('Stats', new mongoose.Sche
   machines: Object, locations: Object, uptime: Object
 }));
 
+const Upload = mongoose.models.Upload || mongoose.model('Upload', new mongoose.Schema({
+  url: String, filename: String, createdAt: { type: Date, default: Date.now }
+}));
+
 /* ─── Auth Middleware ─── */
 function checkAdminAuth(req, res, next) {
   const pass = req.headers['x-admin-pass'] || req.query.pass;
@@ -93,25 +95,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-/* ─── API Endpoints ─── */
-
-// SSE/Events endpoint to resolve console 404 errors from polling
+/* ─── Public API Endpoints ─── */
 app.get('/api/events', (req, res) => {
   res.status(200).json({ status: 'ok' });
-});
-
-// Image upload handler converting files into Base64 data URLs
-app.post('/api/admin/uploads', checkAdminAuth, upload.any(), (req, res) => {
-  try {
-    const file = req.file || (req.files && req.files[0]);
-    if (!file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
-    }
-    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    res.json({ success: true, url: base64Image });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
 });
 
 app.get('/api/content', async (req, res) => {
@@ -129,34 +115,58 @@ app.get('/api/content', async (req, res) => {
   }
 });
 
-app.get('/api/admin/faqs', checkAdminAuth, async (req, res) => {
+app.post(['/api/submissions', '/api/contact'], async (req, res) => {
   try {
-    const faqs = await Faq.find();
-    res.json(faqs);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/admin/faqs', checkAdminAuth, async (req, res) => {
-  try {
-    const faq = new Faq(req.body);
-    await faq.save();
-    res.json(faq);
+    const submission = new Submission(req.body);
+    await submission.save();
+    res.json({ success: true, submission });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.delete('/api/admin/faqs/:id', checkAdminAuth, async (req, res) => {
+/* ─── Admin Image Upload Endpoints ─── */
+const handleUpload = async (req, res) => {
   try {
-    await Faq.findByIdAndDelete(req.params.id);
+    const file = req.file || (req.files && req.files[0]);
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    const filename = `${Date.now()}-${file.originalname || 'image.png'}`;
+    const record = new Upload({ url: base64Image, filename });
+    await record.save();
+    res.json({ success: true, url: base64Image, filename, _id: record._id });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+app.post('/api/admin/uploads', checkAdminAuth, upload.any(), handleUpload);
+app.post('/api/admin/upload', checkAdminAuth, upload.any(), handleUpload);
+
+app.get('/api/admin/uploads', checkAdminAuth, async (req, res) => {
+  try {
+    const uploads = await Upload.find().sort({ createdAt: -1 });
+    res.json(uploads);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/uploads/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) 
+      ? { _id: req.params.id } 
+      : { filename: req.params.id };
+    await Upload.deleteOne(query);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+/* ─── Admin Submissions & Export Endpoints ─── */
 app.get('/api/admin/submissions', checkAdminAuth, async (req, res) => {
   try {
     const subs = await Submission.find().sort({ submittedAt: -1 });
@@ -184,6 +194,32 @@ app.delete('/api/admin/submissions/:id', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/api/admin/export', checkAdminAuth, async (req, res) => {
+  try {
+    const subs = await Submission.find().sort({ submittedAt: -1 });
+    let csv = 'Date,Full Name,Email,Phone,Interest,Message,Status\n';
+    subs.forEach(s => {
+      const date = s.submittedAt ? new Date(s.submittedAt).toISOString() : '';
+      csv += `"${date}","${s.fullName || ''}","${s.email || ''}","${s.phone || ''}","${s.interest || ''}","${(s.message || '').replace(/"/g, '""')}","${s.status || ''}"\n`;
+    });
+    res.header('Content-Type', 'text/csv');
+    res.attachment('submissions.csv');
+    return res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin Locations Endpoints ─── */
+app.get('/api/admin/locations', checkAdminAuth, async (req, res) => {
+  try {
+    const locations = await Location.find();
+    res.json(locations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/locations', checkAdminAuth, async (req, res) => {
   try {
     const loc = new Location(req.body);
@@ -194,10 +230,41 @@ app.post('/api/admin/locations', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.put('/api/admin/locations/:id/feature', checkAdminAuth, async (req, res) => {
+  try {
+    const loc = await Location.findById(req.params.id);
+    if (!loc) return res.status(404).json({ error: 'Location not found' });
+    loc.featured = !loc.featured;
+    await loc.save();
+    res.json(loc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/locations/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const updated = await Location.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/admin/locations/:id', checkAdminAuth, async (req, res) => {
   try {
     await Location.findByIdAndDelete(req.params.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin Machines Endpoints ─── */
+app.get('/api/admin/machines', checkAdminAuth, async (req, res) => {
+  try {
+    const machines = await Machine.find();
+    res.json(machines);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -213,10 +280,29 @@ app.post('/api/admin/machines', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.put('/api/admin/machines/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const updated = await Machine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/admin/machines/:id', checkAdminAuth, async (req, res) => {
   try {
     await Machine.findByIdAndDelete(req.params.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin Products Endpoints ─── */
+app.get('/api/admin/products', checkAdminAuth, async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -232,10 +318,67 @@ app.post('/api/admin/products', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.put('/api/admin/products/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/admin/products/:id', checkAdminAuth, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin FAQs Endpoints ─── */
+app.get('/api/admin/faqs', checkAdminAuth, async (req, res) => {
+  try {
+    const faqs = await Faq.find();
+    res.json(faqs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/faqs', checkAdminAuth, async (req, res) => {
+  try {
+    const faq = new Faq(req.body);
+    await faq.save();
+    res.json(faq);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/admin/faqs/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const updated = await Faq.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/faqs/:id', checkAdminAuth, async (req, res) => {
+  try {
+    await Faq.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin Partners Endpoints ─── */
+app.get('/api/admin/partners', checkAdminAuth, async (req, res) => {
+  try {
+    const partners = await Partner.find();
+    res.json(partners);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -251,10 +394,29 @@ app.post('/api/admin/partners', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.put('/api/admin/partners/:id', checkAdminAuth, async (req, res) => {
+  try {
+    const updated = await Partner.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/admin/partners/:id', checkAdminAuth, async (req, res) => {
   try {
     await Partner.findByIdAndDelete(req.params.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── Admin Stats & Settings Endpoints ─── */
+app.get('/api/admin/stats', checkAdminAuth, async (req, res) => {
+  try {
+    const stats = await Stats.findOne() || {};
+    res.json(stats);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -271,6 +433,15 @@ app.put('/api/admin/stats', checkAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/api/admin/settings', checkAdminAuth, async (req, res) => {
+  try {
+    const settings = await Settings.findOne() || {};
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/admin/settings', checkAdminAuth, async (req, res) => {
   try {
     let settings = await Settings.findOne();
@@ -282,6 +453,7 @@ app.put('/api/admin/settings', checkAdminAuth, async (req, res) => {
   }
 });
 
+/* ─── Server Initialization ─── */
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
