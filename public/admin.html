@@ -594,7 +594,7 @@ function loadLocs() {
         ? '<span class="bdg bdg-green">Featured</span>'
         : '<button class="btn btn-ghost btn-sm" onclick="setFeat(\'' + esc(l._id) + '\')">Set Featured</button>';
       return '<tr>'
-        + '<td><img src="' + str(l.image) + '" class="thumb" onerror="this.src=\'machine.jfif\'"/></td>'
+        + '<td><img src="' + str(l.image) + '" class="thumb" onerror="this.src=\'logo.jpeg\'"/></td>'
         + '<td><strong>' + str(l.name) + '</strong><br/><span style="font-size:11px;color:#9ca3af">' + str(l.nameAr) + '</span></td>'
         + '<td><span class="bdg bdg-gray">' + str(l.type) + '</span></td>'
         + '<td>' + str(l.machine) + '</td>'
@@ -636,7 +636,7 @@ function loadMachs() {
     document.getElementById('mach-body').innerHTML = (c.machines||[]).map(function(m) {
       var badge = m.badge ? '<span class="bdg bdg-dark">' + str(m.badge) + '</span>' : '—';
       return '<tr>'
-        + '<td><img src="' + str(m.image||'machine.jfif') + '" class="thumb" onerror="this.src=\'machine.jfif\'"/></td>'
+        + '<td><img src="' + str(m.image||'logo.jpeg') + '" class="thumb" onerror="this.src=\'machine.jfif\'"/></td>'
         + '<td><strong>' + str(m.name) + '</strong></td>'
         + '<td>' + badge + '</td>'
         + '<td style="max-width:180px;font-size:12px;color:#6b7280">' + sub(m.desc,60) + '…</td>'

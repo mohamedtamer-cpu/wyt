@@ -62,7 +62,7 @@
       window.WYT_machineData.push({
         name : pick(m.name,  m.nameAr),
         desc : pick(m.desc,  m.descAr),
-        image: m.image || 'machine.jfif',
+        image: m.image || 'logo.jpeg',
         specs: (m.specs || []).map(function(sp) { return { l: sp.l || '', v: sp.v || '' }; })
       });
       var badge = m.badge
@@ -70,7 +70,7 @@
         : '';
       var chips = (m.specs || []).slice(0, 3).map(function(sp) { return '<span>' + s(sp.v) + '</span>'; }).join('');
       return '<div class="machine-card reveal" data-modal="' + i + '">'
-        + '<div class="mc-img"><img src="' + s(m.image || 'machine.jfif') + '" alt="' + s(m.name) + '" loading="lazy" onerror="this.src=\'machine.jfif\'"/>' + badge + '</div>'
+        + '<div class="mc-img"><img src="' + s(m.image || 'logo.jpeg') + '" alt="' + s(m.name) + '" loading="lazy" onerror="this.src=\'machine.jfif\'"/>' + badge + '</div>'
         + '<div class="mc-body"><h3>' + pick(m.name, m.nameAr) + '</h3><p>' + pick(m.desc, m.descAr) + '</p>'
         + '<div class="chips">' + chips + '</div></div>'
         + '<div class="card-cta">' + (isAr() ? 'عرض المواصفات ←' : 'View Specs →') + '</div>'
@@ -121,7 +121,7 @@
       var isFeat = i === 0 && l.featured;
       return '<div class="loc-card' + (isFeat ? ' loc-featured' : '') + ' reveal">'
         + '<div class="loc-bg"><img src="' + s(l.image) + '" alt="' + s(l.name) + '" loading="lazy" onerror="this.style.background=\'#1a1a2e\'"/><div class="loc-overlay"></div></div>'
-        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="machine.jfif" alt="WYT Machine"/></div>'
+        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="logo.jpeg" alt="WYT Machine"/></div>'
         + '<div class="loc-info"><span class="loc-type">' + pick(l.type, l.typeAr) + '</span>'
         + '<h3>' + pick(l.name, l.nameAr) + '</h3>'
         + '<p>' + s(l.machine) + (l.area ? ' · ' + pick(l.area, l.areaAr) : '') + '</p></div></div>';
