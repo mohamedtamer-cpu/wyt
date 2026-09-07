@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   WYT — RENDER.JS  v4
+   WYT — RENDER.JS v4
    Fetches /api/content and renders the site.
    Updates via SSE (real-time) + 5s polling
    fallback so changes ALWAYS appear.
@@ -17,6 +17,15 @@
   function setHref(id, val) {
     var el = document.getElementById(id);
     if (el && val) el.href = val;
+  }
+
+  /* Robust Image Resolver with Fallbacks */
+  function getImage(img, defaultFallback) {
+    var fb = defaultFallback || '/images/vending machine.jpg';
+    if (!img || typeof img !== 'string' || img.trim() === '' || img === 'undefined' || img === 'null') {
+      return fb;
+    }
+    return img.trim();
   }
 
   /* ── Fetch from API ── */
@@ -59,18 +68,22 @@
     window.WYT_machineData = [];
 
     grid.innerHTML = machines.map(function(m, i) {
+      var imgSrc = getImage(m.image || m.photo || m.img, '/images/vending machine.jpg');
+      
       window.WYT_machineData.push({
-        name : pick(m.name,  m.nameAr),
-        desc : pick(m.desc,  m.descAr),
-        image: m.image || 'logo.jpeg',
-        specs: (m.specs || []).map(function(sp) { return { l: sp.l || '', v: sp.v || '' }; })
+        name : pick(m.name,  m.nameAr) || 'Unnamed Machine',
+        desc : pick(m.desc,  m.descAr) || '',
+        image: imgSrc,
+        specs: (m.specs || []).map(function(sp) { return { l: sp.l || sp.label || '', v: sp.v || sp.val || '' }; })
       });
+
       var badge = m.badge
         ? '<span class="card-badge' + (m.badge.toLowerCase().indexOf('new') > -1 ? ' new' : '') + '">' + pick(m.badge, m.badgeAr) + '</span>'
         : '';
-      var chips = (m.specs || []).slice(0, 3).map(function(sp) { return '<span>' + s(sp.v) + '</span>'; }).join('');
+      var chips = (m.specs || []).slice(0, 3).map(function(sp) { return '<span>' + s(sp.v || sp.val) + '</span>'; }).join('');
+      
       return '<div class="machine-card reveal" data-modal="' + i + '">'
-        + '<div class="mc-img"><img src="' + s(m.image || 'logo.jpeg') + '" alt="' + s(m.name) + '" loading="lazy" onerror="this.src=\'logo.jpeg\'"/>' + badge + '</div>'
+        + '<div class="mc-img"><img src="' + s(imgSrc) + '" alt="' + s(m.name || 'Vending Machine') + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/vending machine.jpg\';"/>' + badge + '</div>'
         + '<div class="mc-body"><h3>' + pick(m.name, m.nameAr) + '</h3><p>' + pick(m.desc, m.descAr) + '</p>'
         + '<div class="chips">' + chips + '</div></div>'
         + '<div class="card-cta">' + (isAr() ? 'عرض المواصفات ←' : 'View Specs →') + '</div>'
@@ -85,9 +98,10 @@
     if (!products.length) { grid.innerHTML = '<p style="color:#999;text-align:center;padding:40px">No products added yet</p>'; return; }
 
     grid.innerHTML = products.map(function(p) {
+      var imgSrc = getImage(p.image, '/images/logo.jpeg');
       var chips = (p.items || []).map(function(i) { return '<span>' + i + '</span>'; }).join('');
       return '<div class="product-card reveal">'
-        + '<div class="prod-img"><img src="' + s(p.image) + '" alt="' + s(p.name) + '" loading="lazy" onerror="this.style.background=\'#f4f4f0\'"/></div>'
+        + '<div class="prod-img"><img src="' + s(imgSrc) + '" alt="' + s(p.name) + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/logo.jpeg\';"/></div>'
         + '<div class="prod-body"><h3>' + pick(p.name, p.nameAr) + '</h3>'
         + '<p>' + pick(p.desc, p.descAr) + '</p>'
         + '<div class="chips">' + chips + '</div></div></div>';
@@ -119,9 +133,10 @@
 
     grid.innerHTML = sorted.map(function(l, i) {
       var isFeat = i === 0 && l.featured;
+      var locImg = getImage(l.image, '/images/logo.jpeg');
       return '<div class="loc-card' + (isFeat ? ' loc-featured' : '') + ' reveal">'
-        + '<div class="loc-bg"><img src="' + s(l.image) + '" alt="' + s(l.name) + '" loading="lazy" onerror="this.style.background=\'#1a1a2e\'"/><div class="loc-overlay"></div></div>'
-        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="logo.jpeg" alt="WYT Machine"/></div>'
+        + '<div class="loc-bg"><img src="' + s(locImg) + '" alt="' + s(l.name) + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/logo.jpeg\';"/><div class="loc-overlay"></div></div>'
+        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="/images/logo.jpeg" alt="WYT Machine" onerror="this.onerror=null; this.src=\'/images/vending machine.jpg\';"/></div>'
         + '<div class="loc-info"><span class="loc-type">' + pick(l.type, l.typeAr) + '</span>'
         + '<h3>' + pick(l.name, l.nameAr) + '</h3>'
         + '<p>' + s(l.machine) + (l.area ? ' · ' + pick(l.area, l.areaAr) : '') + '</p></div></div>';
@@ -206,7 +221,6 @@
   }
 
   /* ── Polling fallback (every 5s) ── */
-  /* This ensures the website always stays in sync even if SSE drops */
   var lastHash = '';
   function pollContent() {
     fetch('/api/content')
@@ -227,9 +241,9 @@
 
   /* ── INIT ── */
   document.addEventListener('DOMContentLoaded', function() {
-   renderAll();
-  // connectSSE(); /* Disabled for Vercel serverless environment */
-   setInterval(pollContent, 5000);
-});
+    renderAll();
+    // connectSSE(); /* Disabled for Vercel serverless environment */
+    setInterval(pollContent, 5000);
+  });
 
 })();

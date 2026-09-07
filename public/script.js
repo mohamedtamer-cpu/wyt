@@ -136,16 +136,6 @@ const translations = {
     'c1-t':'شراكة علامة تجارية','c1-d':'اعرض منتجك في ماكينات WYT بمصر وتواصل مع آلاف العملاء يومياً.','c1-cta':'شارك معنا',
     'c2-t':'توزيع وفرنشايز','c2-d':'تريد إطلاق WYT في مدينتك؟ لدينا نماذج فرنشايز لرجال الأعمال.','c2-cta':'اكتشف الفرصة',
     'c3-t':'تقنية وتكامل','c3-d':'شركة تقنية أو مزود دفع؟ لنبني معاً لجعل البيع أذكى.','c3-cta':'لنبني معاً',
-    'loc-tag':'Our Machines in the Wild','loc-title':'Trusted across Egypt',
-    'loc-sub':'Our machines are live at these locations — add yours to the map.',
-    'loc-type1':'Corporate Office','loc-name1':'Orascom HQ, Cairo','loc-desc1':'WYT Pro 500 · Main lobby',
-    'loc-type2':'Gym','loc-name2':'GymNation, Maadi','loc-desc2':'WYT Pro 500 · Reception area',
-    'loc-type3':'Hospital','loc-name3':'Maadi Medical Centre','loc-desc3':'WYT Fresh · Staff corridor',
-    'loc-type4':'University','loc-name4':'AUC Campus, New Cairo','loc-desc4':'WYT Compact · Student hub',
-    'loc-type5':'Hotel','loc-name5':'Hilton Cairo, Zamalek','loc-desc5':'WYT Brew · Guest floor',
-    'loc-type6':'Factory','loc-name6':'Elsewedy Electric, 6th Oct','loc-desc6':'WYT Pro 500 · Break room',
-    'loc-cta-title':'Want to see your space here?','loc-cta-sub':'Join 120+ locations across Egypt. It\'s completely free.',
-    'loc-cta-btn':'Add Your Location →',
     'loc-tag':'ماكيناتنا في كل مكان','loc-title':'موثوق بنا في أنحاء مصر',
     'loc-sub':'ماكيناتنا موجودة في هذه المواقع — أضف موقعك للخريطة.',
     'loc-type1':'مكتب شركة','loc-name1':'مقر أوراسكوم، القاهرة','loc-desc1':'WYT Pro 500 · الردهة الرئيسية',
@@ -211,7 +201,7 @@ const i18n = window.i18n = {
       if (t[key] !== undefined) el.textContent = t[key];
     });
 
-    // HTML nodes (for italic etc)
+    // HTML nodes
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.dataset.i18nHtml;
       if (t[key] !== undefined) el.innerHTML = t[key];
@@ -245,31 +235,35 @@ const i18n = window.i18n = {
   const overlay   = document.getElementById('drawerOverlay');
   const closeBtn  = document.getElementById('drawerClose');
 
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 30);
-  }, { passive: true });
+  if (navbar) {
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 30);
+    }, { passive: true });
+  }
 
   function openDrawer() {
-    drawer.classList.add('open');
-    overlay.classList.add('open');
-    hamburger.classList.add('open');
+    if (drawer) drawer.classList.add('open');
+    if (overlay) overlay.classList.add('open');
+    if (hamburger) hamburger.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
   function closeDrawer() {
-    drawer.classList.remove('open');
-    overlay.classList.remove('open');
-    hamburger.classList.remove('open');
+    if (drawer) drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    if (hamburger) hamburger.classList.remove('open');
     document.body.style.overflow = '';
   }
 
-  hamburger.addEventListener('click', openDrawer);
-  closeBtn.addEventListener('click', closeDrawer);
-  overlay.addEventListener('click', closeDrawer);
+  if (hamburger) hamburger.addEventListener('click', openDrawer);
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  if (overlay) overlay.addEventListener('click', closeDrawer);
   document.querySelectorAll('.drawer-links a, .drawer-cta').forEach(l => l.addEventListener('click', closeDrawer));
 
   // Lang toggles
-  document.getElementById('langToggle').addEventListener('click', () => i18n.toggle());
-  document.getElementById('drawerLangToggle').addEventListener('click', () => i18n.toggle());
+  const langToggle = document.getElementById('langToggle');
+  const drawerLangToggle = document.getElementById('drawerLangToggle');
+  if (langToggle) langToggle.addEventListener('click', () => i18n.toggle());
+  if (drawerLangToggle) drawerLangToggle.addEventListener('click', () => i18n.toggle());
 
   // Active nav links on scroll
   const sections = document.querySelectorAll('section[id]');
@@ -288,17 +282,11 @@ const i18n = window.i18n = {
 })();
 
 /* ══════════════════════
-   SCROLL REVEAL
-══════════════════════ */
-/* ══════════════════════
-   REUSABLE INIT FUNCTIONS
-   (called on load AND after render.js
-    injects dynamic content from the CMS)
+   REUSABLE INTERACTION INITS
 ══════════════════════ */
 window.WYT = window.WYT || {};
 
-/* Re-runs the scroll-reveal observer on all .reveal elements
-   that don't yet have the .visible class (safe to call repeatedly) */
+/* Scroll Reveal Observer */
 window.WYT.initReveal = function () {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach((e, i) => {
@@ -312,8 +300,7 @@ window.WYT.initReveal = function () {
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => obs.observe(el));
 };
 
-/* Animates any .counter element with data-target / data-suffix
-   that hasn't been animated yet */
+/* Counters Animation */
 window.WYT.initCounters = function () {
   const counters = document.querySelectorAll('.counter:not([data-counted])');
   if (!counters.length) return;
@@ -342,8 +329,7 @@ window.WYT.initCounters = function () {
   counters.forEach(el => obs.observe(el));
 };
 
-/* Wires up the machine spec modal. machineData comes from the CMS
-   (loaded by render.js) and is passed in here. */
+/* Machine Modal Specs */
 window.WYT.initModal = function (machineData) {
   machineData = machineData || [];
   const overlay    = document.getElementById('modalOverlay');
@@ -355,26 +341,32 @@ window.WYT.initModal = function (machineData) {
   if (!overlay) return;
 
   document.querySelectorAll('[data-modal]').forEach(card => {
+    if (card.dataset.bound) return;
+    card.dataset.bound = 'true';
     card.addEventListener('click', () => {
       const m = machineData[parseInt(card.dataset.modal)];
       if (!m) return;
-      modalName.textContent = m.name;
-      modalDesc.textContent = m.desc;
-      if (modalImg && m.image) modalImg.src = m.image;
-      modalSpecs.innerHTML = (m.specs || []).map(s => `<div><label>${s.l}</label><span>${s.v}</span></div>`).join('');
+      if (modalName) modalName.textContent = m.name || '';
+      if (modalDesc) modalDesc.textContent = m.desc || '';
+      if (modalImg) {
+        modalImg.src = m.image || '/images/vending machine.jpg';
+        modalImg.onerror = function() { this.onerror = null; this.src = '/images/vending machine.jpg'; };
+      }
+      if (modalSpecs) {
+        modalSpecs.innerHTML = (m.specs || []).map(s => `<div><label>${s.l || s.label || ''}</label><span>${s.v || s.val || ''}</span></div>`).join('');
+      }
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
     });
   });
 
   window.closeModal = () => { overlay.classList.remove('open'); document.body.style.overflow = ''; };
-  closeBtn.addEventListener('click', closeModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 };
 
-/* Wires up FAQ accordion items (safe to call repeatedly —
-   removes old listeners by cloning nothing, just re-binds) */
+/* FAQ Accordion */
 window.WYT.initFaq = function () {
   document.querySelectorAll('[data-faq]').forEach(item => {
     const q = item.querySelector('.faq-q');
@@ -388,14 +380,13 @@ window.WYT.initFaq = function () {
   });
 };
 
-/* Run once for any static content present at first paint
-   (render.js will call these again after injecting CMS content) */
+/* Run once for initial static DOM elements */
 window.WYT.initReveal();
 window.WYT.initCounters();
 window.WYT.initFaq();
 
 /* ══════════════════════
-   CONTACT FORM → 3 emails + DB
+   CONTACT FORM
 ══════════════════════ */
 (function initForm() {
   const form        = document.getElementById('contactForm');
@@ -409,36 +400,43 @@ window.WYT.initFaq();
     const t = translations[i18n.lang];
 
     const payload = {
-      firstName : document.getElementById('fn').value.trim(),
-      lastName  : document.getElementById('ln').value.trim(),
-      email     : document.getElementById('fe').value.trim(),
-      phone     : document.getElementById('fp').value.trim() || 'Not provided',
-      interest  : document.getElementById('fi').value || 'Not specified',
-      message   : document.getElementById('fm').value.trim() || '',
+      firstName : document.getElementById('fn') ? document.getElementById('fn').value.trim() : '',
+      lastName  : document.getElementById('ln') ? document.getElementById('ln').value.trim() : '',
+      email     : document.getElementById('fe') ? document.getElementById('fe').value.trim() : '',
+      phone     : document.getElementById('fp') ? document.getElementById('fp').value.trim() : 'Not provided',
+      interest  : document.getElementById('fi') ? document.getElementById('fi').value : 'Not specified',
+      message   : document.getElementById('fm') ? document.getElementById('fm').value.trim() : '',
       lang      : i18n.lang
     };
 
-    submitBtn.disabled    = true;
-    submitBtn.textContent = i18n.lang === 'ar' ? 'جاري الإرسال…' : 'Sending…';
-    formSuccess.style.display = 'none';
-    formError.style.display   = 'none';
+    if (submitBtn) {
+      submitBtn.disabled    = true;
+      submitBtn.textContent = i18n.lang === 'ar' ? 'جاري الإرسال…' : 'Sending…';
+    }
+    if (formSuccess) formSuccess.style.display = 'none';
+    if (formError) formError.style.display   = 'none';
 
     try {
       const res    = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
       const result = await res.json();
 
       if (result.success) {
-        formSuccess.style.display = 'block';
+        if (formSuccess) formSuccess.style.display = 'block';
         form.reset();
       } else {
-        formError.style.display = 'block';
+        if (formError) formError.style.display = 'block';
       }
     } catch {
-      formError.style.display = 'block';
+      if (formError) formError.style.display = 'block';
     } finally {
-      submitBtn.disabled    = false;
-      submitBtn.textContent = t['f-submit'] || 'Send Message →';
-      setTimeout(() => { formSuccess.style.display = 'none'; formError.style.display = 'none'; }, 8000);
+      if (submitBtn) {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = t['f-submit'] || 'Send Message →';
+      }
+      setTimeout(() => { 
+        if (formSuccess) formSuccess.style.display = 'none'; 
+        if (formError) formError.style.display = 'none'; 
+      }, 8000);
     }
   });
 })();
