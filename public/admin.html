@@ -646,26 +646,41 @@ function loadMachs() {
     }).join('') || '<tr><td colspan="6" class="empty-td">No machines added</td></tr>';
   });
 }
-function addMachine(e) {
-  e.preventDefault();
-  var fd = new FormData(document.getElementById('mach-form'));
-  var specsRaw = document.getElementById('mach-specs').value;
-  var specs = specsRaw.split('\n').filter(Boolean).map(function(line) {
-    var parts = line.split('|');
-    return {l: (parts[0]||'').trim(), v: (parts[1]||'').trim()};
+async function addMachine(e) {
+  if (e) e.preventDefault();
+  const specsRaw = document.getElementById('m-specs')?.value || '';
+  const specs = specsRaw.split('\n').filter(l => l.trim()).map(line => {
+    const [label, val] = line.split('|');
+    return { label: (label || '').trim(), val: (val || '').trim() };
   });
-  fd.set('specs', JSON.stringify(specs));
-  fetch('/api/admin/machines?pass=' + PASS, {method:'POST', headers:{'x-admin-pass':PASS}, body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(res) {
-      if (res._id || res.success !== false) {
-        flash('mach-ok','Machine added! Website updated.');
-        document.getElementById('mach-form').reset();
-        document.getElementById('mach-prev-box').style.display = 'none';
-        document.getElementById('mach-specs').value = '';
-        loadMachs();
-      } else { flash('mach-err','Failed: ' + (res.error || JSON.stringify(res)), true); }
-    });
+
+  const payload = {
+    name: document.getElementById('m-name')?.value || '',
+    nameAr: document.getElementById('m-name-ar')?.value || '',
+    badge: document.getElementById('m-badge')?.value || '',
+    badgeAr: document.getElementById('m-badge-ar')?.value || '',
+    desc: document.getElementById('m-desc')?.value || '',
+    descAr: document.getElementById('m-desc-ar')?.value || '',
+    image: machinePhotoUrl || '',
+    specs: specs
+  };
+
+  const res = await fetch(`/api/admin/machines?pass=${encodeURIComponent(PASS)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-pass': PASS
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    alert('Machine added successfully!');
+    location.reload();
+  } else {
+    const err = await res.json();
+    alert('Error adding machine: ' + (err.error || err.message || 'Unknown error'));
+  }
 }
 function delMach(id) {
   if (!confirm('Delete this machine?')) return;
