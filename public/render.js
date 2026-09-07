@@ -70,7 +70,7 @@
         : '';
       var chips = (m.specs || []).slice(0, 3).map(function(sp) { return '<span>' + s(sp.v) + '</span>'; }).join('');
       return '<div class="machine-card reveal" data-modal="' + i + '">'
-        + '<div class="mc-img"><img src="' + s(m.image || 'logo.jpeg') + '" alt="' + s(m.name) + '" loading="lazy" onerror="this.src=\'machine.jfif\'"/>' + badge + '</div>'
+        + '<div class="mc-img"><img src="' + s(m.image || 'logo.jpeg') + '" alt="' + s(m.name) + '" loading="lazy" onerror="this.src=\'logo.jpeg\'"/>' + badge + '</div>'
         + '<div class="mc-body"><h3>' + pick(m.name, m.nameAr) + '</h3><p>' + pick(m.desc, m.descAr) + '</p>'
         + '<div class="chips">' + chips + '</div></div>'
         + '<div class="card-cta">' + (isAr() ? 'عرض المواصفات ←' : 'View Specs →') + '</div>'
@@ -227,9 +227,9 @@
 
   /* ── INIT ── */
   document.addEventListener('DOMContentLoaded', function() {
-    renderAll();       /* first paint from DB */
-    connectSSE();      /* real-time updates */
-    setInterval(pollContent, 5000); /* 5s polling fallback */
-  });
+   renderAll();
+  // connectSSE(); /* Disabled for Vercel serverless environment */
+   setInterval(pollContent, 5000);
+});
 
 })();
