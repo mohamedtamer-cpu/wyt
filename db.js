@@ -43,21 +43,24 @@ async function getContentDoc() {
   return doc;
 }
 
-/* Helper to prevent empty object insertions */
-function validateData(data, entityName) {
-  if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-    throw new Error(`${entityName} payload cannot be empty`);
-  }
+function isValidItem(item) {
+  if (!item || typeof item !== 'object') return false;
+  return Boolean(item.name || item.title || item.image || (item.specs && item.specs.length > 0));
 }
 
-/* Safe array filter comparing string representation of IDs */
-function filterById(array, id) {
-  return (array || []).filter(item => item && item._id && String(item._id) !== String(id));
+function sanitizeArray(arr) {
+  return (arr || []).filter(item => item && item._id && isValidItem(item));
 }
 
 module.exports = {
   getContent: async () => {
     const doc = await getContentDoc();
+    // Clean up empty/corrupt entries dynamically on fetch
+    doc.machines = sanitizeArray(doc.machines);
+    doc.locations = sanitizeArray(doc.locations);
+    doc.products = sanitizeArray(doc.products);
+    doc.faqs = sanitizeArray(doc.faqs);
+    doc.partners = sanitizeArray(doc.partners);
     return doc.toObject();
   },
 
@@ -68,7 +71,6 @@ module.exports = {
 
   addSubmission: async (data) => {
     await connectDB();
-    validateData(data, 'Submission');
     return await SubmissionModel.create(data);
   },
 
@@ -98,8 +100,30 @@ module.exports = {
     return doc.stats;
   },
 
+  addMachine: async (data) => {
+    if (!isValidItem(data)) {
+      throw new Error("Cannot save empty machine details.");
+    }
+    const doc = await getContentDoc();
+    const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
+    doc.machines = sanitizeArray(doc.machines);
+    doc.machines.push(item);
+    doc.markModified('machines');
+    await doc.save();
+    return item;
+  },
+
+  deleteMachine: async (id) => {
+    const doc = await getContentDoc();
+    doc.machines = (doc.machines || []).filter(
+      (m) => m && m._id && String(m._id) !== String(id) && isValidItem(m)
+    );
+    doc.markModified('machines');
+    await doc.save();
+    return true;
+  },
+
   addLocation: async (data) => {
-    validateData(data, 'Location');
     const doc = await getContentDoc();
     const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
     doc.locations.push(item);
@@ -110,44 +134,13 @@ module.exports = {
 
   deleteLocation: async (id) => {
     const doc = await getContentDoc();
-    doc.locations = filterById(doc.locations, id);
+    doc.locations = (doc.locations || []).filter(l => l && l._id && String(l._id) !== String(id));
     doc.markModified('locations');
-    await doc.save();
-    return true;
-  },
-
-  setFeatured: async (id) => {
-    const doc = await getContentDoc();
-    doc.locations.forEach(l => {
-      if (l && l._id) {
-        l.featured = (String(l._id) === String(id));
-      }
-    });
-    doc.markModified('locations');
-    await doc.save();
-    return true;
-  },
-
-  addMachine: async (data) => {
-    validateData(data, 'Machine');
-    const doc = await getContentDoc();
-    const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
-    doc.machines.push(item);
-    doc.markModified('machines');
-    await doc.save();
-    return item;
-  },
-
-  deleteMachine: async (id) => {
-    const doc = await getContentDoc();
-    doc.machines = filterById(doc.machines, id);
-    doc.markModified('machines');
     await doc.save();
     return true;
   },
 
   addProduct: async (data) => {
-    validateData(data, 'Product');
     const doc = await getContentDoc();
     const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
     doc.products.push(item);
@@ -158,64 +151,24 @@ module.exports = {
 
   deleteProduct: async (id) => {
     const doc = await getContentDoc();
-    doc.products = filterById(doc.products, id);
+    doc.products = (doc.products || []).filter(p => p && p._id && String(p._id) !== String(id));
     doc.markModified('products');
     await doc.save();
     return true;
   },
 
-  addFaq: async (data) => {
-    validateData(data, 'FAQ');
+  clearAllCorrupt: async () => {
     const doc = await getContentDoc();
-    const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
-    doc.faqs.push(item);
-    doc.markModified('faqs');
-    await doc.save();
-    return item;
-  },
-
-  deleteFaq: async (id) => {
-    const doc = await getContentDoc();
-    doc.faqs = filterById(doc.faqs, id);
-    doc.markModified('faqs');
-    await doc.save();
-    return true;
-  },
-
-  addPartner: async (data) => {
-    validateData(data, 'Partner');
-    const doc = await getContentDoc();
-    const item = Object.assign({ _id: new mongoose.Types.ObjectId().toString() }, data);
-    doc.partners.push(item);
-    doc.markModified('partners');
-    await doc.save();
-    return item;
-  },
-
-  deletePartner: async (id) => {
-    const doc = await getContentDoc();
-    doc.partners = filterById(doc.partners, id);
-    doc.markModified('partners');
-    await doc.save();
-    return true;
-  },
-
-  /* One-time cleanup helper to automatically purge corrupt/empty documents across all sections */
-  clearCorruptItems: async () => {
-    const doc = await getContentDoc();
-
-    doc.machines = (doc.machines || []).filter(m => m && m._id && (m.name || m.nameAr || (m.specs && m.specs.length > 0)));
-    doc.locations = (doc.locations || []).filter(l => l && l._id && (l.name || l.nameAr));
-    doc.products = (doc.products || []).filter(p => p && p._id && (p.name || p.nameAr));
-    doc.faqs = (doc.faqs || []).filter(f => f && f._id && (f.q || f.qAr));
-    doc.partners = (doc.partners || []).filter(p => p && p._id && (p.name || p.nameAr));
-
+    doc.machines = sanitizeArray(doc.machines);
+    doc.locations = sanitizeArray(doc.locations);
+    doc.products = sanitizeArray(doc.products);
+    doc.faqs = sanitizeArray(doc.faqs);
+    doc.partners = sanitizeArray(doc.partners);
     doc.markModified('machines');
     doc.markModified('locations');
     doc.markModified('products');
     doc.markModified('faqs');
     doc.markModified('partners');
-
     await doc.save();
     return doc.toObject();
   }

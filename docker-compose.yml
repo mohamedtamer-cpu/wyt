@@ -68,3 +68,4 @@ volumes:
   certbot-webroot:
   certbot-certs:
   app-logs:
+  app-uploads:
