@@ -2,65 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WYT Admin Panel</title>
-  <link rel="stylesheet" href="admin.css">
+  <link rel="icon" href="/images/logo.jpeg" type="image/jpeg">
+  <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
-
-  <div class="sidebar">
+  <aside class="sidebar">
+    <a href="/" aria-label="WYT home"><img class="admin-logo" src="/images/logo.jpeg" alt="WYT"></a>
     <h2>WYT Admin</h2>
-    <a href="#" class="active">Machines</a>
-  </div>
-
-  <div class="main">
-    <div class="card">
-      <h3>Add New Machine</h3>
-      <form id="m-form" onsubmit="event.preventDefault(); addMachine();">
-        <div class="form-group">
-          <label>Machine Name</label>
-          <input type="text" id="m-name" class="form-control" required />
-        </div>
-        <div class="form-group">
-          <label>Badge (Optional)</label>
-          <input type="text" id="m-badge" class="form-control" placeholder="e.g. Popular" />
-        </div>
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="m-desc" class="form-control"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Machine Photo</label>
-          <div class="image-picker" onclick="document.getElementById('img-input').click();">
-            <span>Click to select an image file</span>
-            <input type="file" id="img-input" accept="image/*" style="display:none;" />
-            <img id="img-preview" src="" style="display:none;" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Specifications (One per line: Label | Value)</label>
-          <textarea id="m-specs" class="form-control" placeholder="Dimensions | 180 x 90 x 80 cm&#10;Capacity | 60 slots"></textarea>
-        </div>
-        <button type="submit" class="btn">Add Machine</button>
+    <nav id="sections" aria-label="Content sections"></nav>
+    <a href="/" target="_blank" rel="noopener">View website ↗</a>
+    <button id="logout" class="btn" hidden>Log out</button>
+  </aside>
+  <main class="main">
+    <p id="notice" role="status" aria-live="polite"></p>
+    <section id="login" class="card">
+      <h1>Welcome back</h1>
+      <p>Enter your admin password to manage the website.</p>
+      <form id="login-form">
+        <div class="form-group"><label for="password">Admin password</label><input id="password" type="password" class="form-control" autocomplete="current-password" required></div>
+        <button class="btn">Log in</button>
       </form>
+    </section>
+    <div id="workspace" hidden>
+      <section class="card" id="editor"><h1 id="editor-title"></h1><form id="content-form"><div id="fields"></div><button class="btn" id="save">Save</button></form></section>
+      <section class="card"><h2 id="list-title"></h2><div class="table-wrap"><table><thead id="list-head"></thead><tbody id="content-list"></tbody></table></div></section>
     </div>
-
-    <div class="card">
-      <h3>All Machines</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Photo</th>
-            <th>Name</th>
-            <th>Badge</th>
-            <th>Description</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="machines-list"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script src="admin.js"></script>
+  </main>
+  <script src="/admin.js"></script>
 </body>
 </html>

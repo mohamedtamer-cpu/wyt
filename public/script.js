@@ -221,7 +221,7 @@ const i18n = window.i18n = {
 
   init() {
     const saved = localStorage.getItem('wyt-lang');
-    if (saved && saved !== 'en') { this.lang = saved; this.apply(); }
+    if (saved === 'ar') { this.lang = saved; this.apply(); }
   }
 };
 
@@ -353,7 +353,8 @@ window.WYT.initModal = function (machineData) {
         modalImg.onerror = function() { this.onerror = null; this.src = '/images/vending machine.jpg'; };
       }
       if (modalSpecs) {
-        modalSpecs.innerHTML = (m.specs || []).map(s => `<div><label>${s.l || s.label || ''}</label><span>${s.v || s.val || ''}</span></div>`).join('');
+        modalSpecs.replaceChildren();
+        (m.specs || []).forEach(spec => { const row = document.createElement('div'); const label = document.createElement('label'); const value = document.createElement('span'); label.textContent = spec.l || spec.label || ''; value.textContent = spec.v || spec.val || ''; row.append(label, value); modalSpecs.append(row); });
       }
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -361,6 +362,8 @@ window.WYT.initModal = function (machineData) {
   });
 
   window.closeModal = () => { overlay.classList.remove('open'); document.body.style.overflow = ''; };
+  if (overlay.dataset.bound) return;
+  overlay.dataset.bound = 'true';
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });

@@ -514,4 +514,6 @@ footer{background:var(--dark);color:rgba(255,255,255,.8);padding:64px 0 28px;}
   .locations-grid { grid-template-columns: 1fr; }
   .loc-featured   { min-height: 260px; }
   .loc-cta        { flex-direction: column; text-align: center; }
-}
+}/* Preserve the actual brand colors on light and dark backgrounds. */
+.nav-logo img, .drawer-logo, .footer-logo { object-fit: contain; background: #fff; border-radius: 6px; padding: 3px; filter: none; }
+.partner-image { width: 56px; height: 40px; object-fit: contain; }

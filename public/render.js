@@ -9,7 +9,7 @@
   /* ── Helpers ── */
   function isAr() { return window.i18n && window.i18n.lang === 'ar'; }
   function pick(en, ar) { return (isAr() && ar) ? ar : (en || ''); }
-  function s(v) { return v || ''; }
+  function s(v) { return String(v ?? '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function setText(id, val) {
     var el = document.getElementById(id);
     if (el && val) el.textContent = val;
@@ -25,13 +25,13 @@
     if (!img || typeof img !== 'string' || img.trim() === '' || img === 'undefined' || img === 'null') {
       return fb;
     }
-    return img.trim();
+    return /^(\/[^/]|https?:\/\/|data:image\/(png|jpeg|webp|gif);base64,)/i.test(img.trim()) ? img.trim() : fb;
   }
 
   /* ── Fetch from API ── */
   function fetchContent(cb) {
     fetch('/api/content')
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (!r.ok) throw new Error('Content could not be loaded.'); return r.json(); })
       .then(function(data) { cb(null, data); })
       .catch(function(err) { console.error('[WYT] fetch failed:', err); cb(err); });
   }
@@ -63,6 +63,7 @@
   function renderMachines(machines) {
     var grid = document.getElementById('machinesGrid');
     if (!grid || !machines) return;
+    window.WYT_machineData = [];
     if (!machines.length) { grid.innerHTML = '<p style="color:#999;text-align:center;padding:40px">No machines added yet</p>'; return; }
 
     window.WYT_machineData = [];
@@ -78,13 +79,13 @@
       });
 
       var badge = m.badge
-        ? '<span class="card-badge' + (m.badge.toLowerCase().indexOf('new') > -1 ? ' new' : '') + '">' + pick(m.badge, m.badgeAr) + '</span>'
+        ? '<span class="card-badge' + (m.badge.toLowerCase().indexOf('new') > -1 ? ' new' : '') + '">' + s(pick(m.badge, m.badgeAr)) + '</span>'
         : '';
       var chips = (m.specs || []).slice(0, 3).map(function(sp) { return '<span>' + s(sp.v || sp.val) + '</span>'; }).join('');
       
       return '<div class="machine-card reveal" data-modal="' + i + '">'
         + '<div class="mc-img"><img src="' + s(imgSrc) + '" alt="' + s(m.name || 'Vending Machine') + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/vending machine.jpg\';"/>' + badge + '</div>'
-        + '<div class="mc-body"><h3>' + pick(m.name, m.nameAr) + '</h3><p>' + pick(m.desc, m.descAr) + '</p>'
+        + '<div class="mc-body"><h3>' + s(pick(m.name, m.nameAr)) + '</h3><p>' + s(pick(m.desc, m.descAr)) + '</p>'
         + '<div class="chips">' + chips + '</div></div>'
         + '<div class="card-cta">' + (isAr() ? 'عرض المواصفات ←' : 'View Specs →') + '</div>'
         + '</div>';
@@ -99,11 +100,11 @@
 
     grid.innerHTML = products.map(function(p) {
       var imgSrc = getImage(p.image, '/images/logo.jpeg');
-      var chips = (p.items || []).map(function(i) { return '<span>' + i + '</span>'; }).join('');
+      var chips = (p.items || []).map(function(i) { return '<span>' + s(i) + '</span>'; }).join('');
       return '<div class="product-card reveal">'
         + '<div class="prod-img"><img src="' + s(imgSrc) + '" alt="' + s(p.name) + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/logo.jpeg\';"/></div>'
-        + '<div class="prod-body"><h3>' + pick(p.name, p.nameAr) + '</h3>'
-        + '<p>' + pick(p.desc, p.descAr) + '</p>'
+        + '<div class="prod-body"><h3>' + s(pick(p.name, p.nameAr)) + '</h3>'
+        + '<p>' + s(pick(p.desc, p.descAr)) + '</p>'
         + '<div class="chips">' + chips + '</div></div></div>';
     }).join('');
   }
@@ -116,8 +117,8 @@
 
     bar.innerHTML = partners.map(function(p) {
       return '<div class="partner-logo">'
-        + '<div class="logo-badge" style="background:' + s(p.bg) + ';color:' + s(p.color) + '">' + s(p.initials) + '</div>'
-        + '<span>' + s(p.name) + '</span></div>';
+        + '<div class="logo-badge" style="background:' + s(/^#[0-9a-f]{3,8}$/i.test(p.bg) ? p.bg : '#eef2f7') + ';color:' + s(/^#[0-9a-f]{3,8}$/i.test(p.color) ? p.color : '#26344a') + '">' + s(p.initials) + '</div>'
+        + (p.image ? '<img class="partner-image" src="' + s(getImage(p.image, '/images/logo.jpeg')) + '" alt="' + s(p.name) + '" loading="lazy">' : '') + '<span>' + s(p.name) + '</span></div>';
     }).join('');
   }
 
@@ -136,10 +137,10 @@
       var locImg = getImage(l.image, '/images/logo.jpeg');
       return '<div class="loc-card' + (isFeat ? ' loc-featured' : '') + ' reveal">'
         + '<div class="loc-bg"><img src="' + s(locImg) + '" alt="' + s(l.name) + '" loading="lazy" onerror="this.onerror=null; this.src=\'/images/logo.jpeg\';"/><div class="loc-overlay"></div></div>'
-        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="/images/logo.jpeg" alt="WYT Machine" onerror="this.onerror=null; this.src=\'/images/vending machine.jpg\';"/></div>'
-        + '<div class="loc-info"><span class="loc-type">' + pick(l.type, l.typeAr) + '</span>'
-        + '<h3>' + pick(l.name, l.nameAr) + '</h3>'
-        + '<p>' + s(l.machine) + (l.area ? ' · ' + pick(l.area, l.areaAr) : '') + '</p></div></div>';
+        + '<div class="loc-machine' + (isFeat ? '' : ' loc-machine-sm') + '"><img src="/images/vending machine.jpg" alt="WYT vending machine" onerror="this.onerror=null; this.src=\'/images/vending machine.jpg\';"/></div>'
+        + '<div class="loc-info"><span class="loc-type">' + s(pick(l.type, l.typeAr)) + '</span>'
+        + '<h3>' + s(pick(l.name, l.nameAr)) + '</h3>'
+        + '<p>' + s(l.machine) + (l.area ? ' · ' + s(pick(l.area, l.areaAr)) : '') + '</p></div></div>';
     }).join('');
   }
 
@@ -151,8 +152,8 @@
 
     list.innerHTML = faqs.map(function(f) {
       return '<div class="faq-item reveal" data-faq>'
-        + '<button class="faq-q"><span>' + pick(f.q, f.qAr) + '</span><span class="faq-icon">+</span></button>'
-        + '<div class="faq-a"><p>' + pick(f.a, f.aAr) + '</p></div></div>';
+        + '<button class="faq-q"><span>' + s(pick(f.q, f.qAr)) + '</span><span class="faq-icon">+</span></button>'
+        + '<div class="faq-a"><p>' + s(pick(f.a, f.aAr)) + '</p></div></div>';
     }).join('');
   }
 
@@ -183,6 +184,7 @@
   function renderAll() {
     fetchContent(function(err, c) {
       if (err || !c) return;
+      lastHash = JSON.stringify(c);
       renderStats(c.stats);
       renderMachines(c.machines);
       renderProducts(c.products);
@@ -224,9 +226,9 @@
   var lastHash = '';
   function pollContent() {
     fetch('/api/content')
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (!r.ok) throw new Error('Content could not be loaded.'); return r.json(); })
       .then(function(c) {
-        var hash = (c.locations||[]).length + '-' + (c.machines||[]).length + '-' + (c.faqs||[]).length + '-' + (c.partners||[]).length + '-' + JSON.stringify(c.stats);
+        var hash = JSON.stringify(c);
         if (hash !== lastHash) {
           lastHash = hash;
           console.log('[WYT] Polling detected change → re-rendering');
