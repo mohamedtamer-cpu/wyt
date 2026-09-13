@@ -10,22 +10,22 @@
   },
   "stats": {
     "machines": {
-      "value": 500,
-      "suffix": "+",
+      "value": 1,
+      "suffix": "",
       "label": "Machines Deployed",
       "labelAr": "ماكينة منتشرة"
     },
     "locations": {
-      "value": 120,
-      "suffix": "+",
+      "value": 0,
+      "suffix": "",
       "label": "Partner Locations",
       "labelAr": "موقع شريك"
     },
     "uptime": {
-      "value": 98,
-      "suffix": "%",
-      "label": "Uptime",
-      "labelAr": "وقت تشغيل"
+      "value": 24,
+      "suffix": "h",
+      "label": "Availability",
+      "labelAr": "الإتاحة"
     }
   },
   "locations": [
