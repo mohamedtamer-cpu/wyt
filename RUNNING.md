@@ -17,6 +17,6 @@ This file supersedes the older admin/password and instant-update instructions in
 
 ## Submission emails
 
-Set GMAIL_USER and GMAIL_PASS (a Google App Password) in your hosting environment. The sender also receives team notifications by default. To notify multiple inboxes, set ADMIN_NOTIFICATION_EMAILS to a comma-separated list. Each saved request sends a receipt to the customer and a separate message to the team. Arabic requests receive an Arabic receipt.
+Set GMAIL_USER and GMAIL_PASS (a Google App Password) in your hosting environment. The sender is always GMAIL_USER. Team notifications default to the three addresses in config/notifications.json. To notify multiple inboxes, set ADMIN_NOTIFICATION_EMAILS to a comma-separated list. Each saved request sends a branded HTML receipt with a copy of the submitted details to the customer and a separate actionable alert to the team. Both include plain-text alternatives and the WYT logo. Arabic requests receive an Arabic receipt.
 
 Submissions shows Customer and Team delivery results. Sent means accepted by the email server, not confirmed inbox delivery. Check email connection verifies the hosting configuration without sending an email. Retry unsent emails sends only messages not recorded as Sent; older requests have no delivery record and can be sent manually. Requests remain saved if sending fails. An in-progress email attempt prevents simultaneous retries for up to two minutes.
