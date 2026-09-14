@@ -10,9 +10,24 @@ test('admin authentication, content CRUD, contact validation, and JSON failures'
     addItem: async (key, data) => { const item = { ...validateItem(key, data), _id: 'test-id' }; content[key].push(item); return item; },
     deleteItem: async (key, id) => { content[key] = content[key].filter(item => item._id !== id); },
     updateSection: async (key, data) => content[key] = data,
-    addSubmission: async data => submissions.push(data), getSubmissions: async () => submissions
+    addSubmission: async data => { const item = { ...data, _id: String(submissions.length + 1), status: 'Pending' }; submissions.push(item); return item; }, getSubmissions: async () => submissions,
+    updateSubmissionNotifications: async (id, notifications) => { submissions.find(item => item._id === id).notifications = notifications; },
+    claimSubmissionEmailRetry: async id => submissions.find(item => item._id === id),
+    updateSubmissionStatus: async (id, status, expectedStatus) => {
+      const item = submissions.find(item => item._id === id);
+      if (!item) throw Object.assign(new Error('Not found'), { status: 404 });
+      if (item.status !== expectedStatus) throw Object.assign(new Error('Changed by another admin'), { status: 409 });
+      item.status = status; return item;
+    }
   };
-  const server = createApp(store).listen(0, '127.0.0.1');
+  let failEmail = false, deliveries = 0;
+  const emailService = { verify: async () => ({ ready: true, recipients: ['team@example.com'] }), sendSubmission: async (item, previous = {}) => {
+    deliveries++;
+    if (failEmail) throw new Error('SMTP unavailable');
+    assert.ok(item._id); assert.ok(submissions.includes(item), 'save must happen before sending');
+    return { customer: { status: 'Sent' }, team: { status: 'Sent' } };
+  } };
+  const server = createApp(store, emailService).listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const request = (url, method = 'GET', body, authenticated = true) => fetch(base + url, { method, headers: { 'Content-Type': 'application/json', ...(authenticated ? { 'x-admin-pass': process.env.ADMIN_PASSWORD } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -36,6 +51,22 @@ test('admin authentication, content CRUD, contact validation, and JSON failures'
     assert.equal((await request('/api/contact', 'POST', {}, false)).status, 400);
     assert.equal((await request('/api/contact', 'POST', { firstName: 'Test', lastName: 'User', email: 'test@example.com', message: 'Hello' }, false)).status, 201);
     assert.equal((await (await request('/api/admin/submissions')).json()).length, 1);
+    assert.equal(deliveries, 1);
+    assert.equal(submissions[0].notifications.customer.status, 'Sent');
+    assert.equal((await request('/api/admin/submissions/1/status', 'PATCH', { status: 'Done', expectedStatus: 'Pending' }, false)).status, 401);
+    assert.equal((await request('/api/admin/submissions/1/status', 'PATCH', { status: 'Other', expectedStatus: 'Pending' })).status, 400);
+    assert.equal((await request('/api/admin/submissions/1/status', 'PATCH', { status: 'Done', expectedStatus: 'Pending' })).status, 200);
+    assert.equal((await (await request('/api/admin/submissions')).json())[0].status, 'Done');
+    assert.equal((await request('/api/admin/submissions/1/status', 'PATCH', { status: 'Done', expectedStatus: 'Pending' })).status, 409);
+    assert.equal((await request('/api/admin/submissions/1/status', 'PATCH', { status: 'Pending', expectedStatus: 'Done' })).status, 200);
+    assert.equal((await request('/api/admin/submissions/missing/status', 'PATCH', { status: 'Done', expectedStatus: 'Pending' })).status, 404);
+    assert.equal((await request('/api/admin/email-status', 'GET', undefined, false)).status, 401);
+    assert.equal((await (await request('/api/admin/email-status')).json()).ready, true);
+    assert.equal((await request('/api/admin/submissions/1/retry-emails', 'POST', undefined, false)).status, 401);
+    assert.equal((await request('/api/admin/submissions/1/retry-emails', 'POST')).status, 200);
+    failEmail = true;
+    assert.equal((await request('/api/contact', 'POST', { firstName: 'Test', lastName: 'User', email: 'test@example.com', message: 'Email failure test' }, false)).status, 201);
+    assert.equal(submissions.length, 2, 'email failure must not lose a request');
     const malformed = await fetch(base + '/api/admin/machines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{' });
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).success, false);
     assert.equal((await request('/api/unknown')).status, 404);

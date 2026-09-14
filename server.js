@@ -3,8 +3,9 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const db = require('./db');
+const mailer = require('./mailer');
 
-function createApp(store = db) {
+function createApp(store = db, emailService = mailer) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '4mb' }));
@@ -41,6 +42,19 @@ function createApp(store = db) {
   app.post('/api/machines', admin, run(async (req, res) => res.status(201).json({ success: true, machine: await store.addItem('machines', req.body) })));
   app.delete('/api/machines/:id', admin, run(async (req, res) => { await store.deleteItem('machines', req.params.id); res.json({ success: true }); }));
   app.get('/api/admin/submissions', run(async (req, res) => res.json(await store.getSubmissions())));
+  app.patch('/api/admin/submissions/:id/status', run(async (req, res) => {
+    const { status, expectedStatus } = req.body || {};
+    if (!['Pending', 'Done'].includes(status) || !['Pending', 'Done'].includes(expectedStatus)) return res.status(400).json({ error: 'Choose Done or Not done.' });
+    const submission = await store.updateSubmissionStatus(req.params.id, status, expectedStatus);
+    res.json({ success: true, submission });
+  }));
+  app.get('/api/admin/email-status', run(async (req, res) => res.json(await emailService.verify())));
+  app.post('/api/admin/submissions/:id/retry-emails', run(async (req, res) => {
+    const submission = await store.claimSubmissionEmailRetry(req.params.id);
+    const notifications = await emailService.sendSubmission(submission, submission.notifications || {});
+    await store.updateSubmissionNotifications(submission._id, notifications);
+    res.json({ success: true, notifications });
+  }));
   app.post('/api/contact', run(async (req, res) => {
     const data = {};
     for (const key of ['firstName', 'lastName', 'email', 'phone', 'interest', 'message', 'lang']) {
@@ -48,7 +62,13 @@ function createApp(store = db) {
       if (data[key].length > (key === 'message' ? 5000 : 200)) return res.status(400).json({ error: `${key} is too long.` });
     }
     if (!data.firstName || !data.lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) || !data.message) return res.status(400).json({ error: 'Enter your name, a valid email address, and a message.' });
-    await store.addSubmission({ ...data, fullName: `${data.firstName} ${data.lastName}`, ip: req.ip });
+    const submission = await store.addSubmission({ ...data, fullName: `${data.firstName} ${data.lastName}`, ip: req.ip, emailRetryUntil: new Date(Date.now() + 120000) });
+    // Save first, then await both deliveries before the serverless request ends.
+    // Email trouble must not encourage the customer to submit the same request again.
+    try {
+      const notifications = await emailService.sendSubmission(submission);
+      await store.updateSubmissionNotifications(submission._id, notifications);
+    } catch (error) { console.error('[WYT] Submission saved; email processing failed:', error.code || error.name); }
     res.status(201).json({ success: true });
   }));
   app.use('/api', (req, res) => res.status(404).json({ error: 'API endpoint not found.' }));

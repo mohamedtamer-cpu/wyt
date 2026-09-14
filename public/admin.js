@@ -70,6 +70,7 @@ async function renderSection() {
   imageValue = ''; $('fields').replaceChildren(); $('content-list').replaceChildren(); $('list-head').replaceChildren();
   document.querySelectorAll('#sections button').forEach(button => button.classList.toggle('active', button.dataset.section === section));
   $('editor').hidden = section === 'submissions';
+  $('submission-tools').hidden = section !== 'submissions';
   $('editor-title').textContent = ['settings', 'stats'].includes(section) ? `Update ${section}` : `Add ${section === 'faqs' ? 'FAQ' : section.slice(0, -1)}`;
   $('list-title').textContent = title(section);
   $('save').textContent = ['settings', 'stats'].includes(section) ? 'Save changes' : 'Add item';
@@ -81,7 +82,8 @@ async function renderSection() {
     }
   } else for (const key of definitions[section]) $('fields').append(inputField(key, section === 'settings' ? content.settings?.[key] || '' : ''));
   if (['settings', 'stats'].includes(section)) { $('list-title').textContent = 'Changes appear on the website within 5 seconds.'; return; }
-  const rows = section === 'submissions' ? await api('/api/admin/submissions') : content[section] || [];
+  if (section === 'submissions') { submissionHash = ''; await refreshSubmissions(); return; }
+  const rows = content[section] || [];
   const headings = section === 'submissions' ? ['Name', 'Email / phone', 'Message / interest', 'Submitted'] : ['Name / question', 'Details', 'Action'];
   const header = document.createElement('tr');
   headings.forEach(value => { const th = document.createElement('th'); th.textContent = value; header.append(th); }); $('list-head').append(header);
@@ -163,3 +165,66 @@ $('content-form').addEventListener('submit', async event => {
 });
 // Remove passwords from old bookmarked URLs; login credentials stay only in memory.
 if (new URLSearchParams(location.search).has('pass')) history.replaceState(null, '', location.pathname);
+
+let submissionHash = '', submissionRequest = 0, refreshingSubmissions = false;
+async function refreshSubmissions() {
+  const requestId = ++submissionRequest;
+  const rows = await api('/api/admin/submissions');
+  if (requestId !== submissionRequest || section !== 'submissions' || (!authenticated && !loggingIn)) return;
+  const hash = JSON.stringify(rows);
+  if (hash === submissionHash) return;
+  submissionHash = hash;
+  $('list-head').replaceChildren(); $('content-list').replaceChildren();
+  const headings = ['Request', 'Contact', 'Message', 'Progress', 'Emails'];
+  const header = document.createElement('tr');
+  headings.forEach(text => { const th = document.createElement('th'); th.textContent = text; header.append(th); }); $('list-head').append(header);
+  $('list-title').textContent = `Submissions (${rows.filter(item => item.status !== 'Done').length} not done)`;
+  if (!rows.length) { const cell = $('content-list').insertRow().insertCell(); cell.colSpan = 5; cell.textContent = 'No requests yet.'; }
+  for (const item of rows) {
+    const row = $('content-list').insertRow();
+    function cell(index) { const el = row.insertCell(); el.dataset.label = headings[index]; return el; }
+    cell(0).textContent = `${item.fullName || [item.firstName, item.lastName].filter(Boolean).join(' ')}\n${item.submittedEG || ''}`;
+    cell(1).textContent = `${item.email || ''}\n${item.phone || ''}`;
+    cell(2).textContent = `${item.interest || ''}\n${item.message || ''}`;
+    const progress = cell(3), done = item.status === 'Done';
+    const badge = document.createElement('span'); badge.className = 'status-badge ' + (done ? 'is-done' : 'is-pending'); badge.textContent = done ? 'Done' : 'Not done'; progress.append(badge);
+    if (item.statusUpdatedAt) { const when = document.createElement('small'); when.textContent = 'Updated ' + new Date(item.statusUpdatedAt).toLocaleString(); progress.append(when); }
+    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'btn status-action'; toggle.textContent = done ? 'Mark not done' : 'Mark done'; toggle.disabled = !item._id;
+    toggle.addEventListener('click', async () => {
+      if (busy) return; busy = true; toggle.disabled = true;
+      try {
+        await api(`/api/admin/submissions/${encodeURIComponent(item._id)}/status`, { method: 'PATCH', body: JSON.stringify({ status: done ? 'Pending' : 'Done', expectedStatus: done ? 'Done' : 'Pending' }) });
+        await refreshSubmissions(); notify('Progress saved for all admins.');
+      } catch (error) { notify(error.message, true); if (authenticated) await refreshSubmissions().catch(() => {}); }
+      finally { busy = false; toggle.disabled = false; }
+    }); progress.append(toggle);
+    const delivery = cell(4);
+    for (const [key, name] of [['customer', 'Customer'], ['team', 'Team']]) {
+      const state = item.notifications?.[key]; const label = document.createElement('small');
+      label.textContent = `${name}: ${state?.status === 'Sent' ? 'Sent' : state?.status === 'Failed' ? 'Failed (' + (state.code || 'SEND_FAILED') + ')' : 'Not sent / not recorded'}`; delivery.append(label);
+    }
+    if (item.notifications?.customer?.status !== 'Sent' || item.notifications?.team?.status !== 'Sent') {
+      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'btn status-action'; retry.textContent = 'Retry unsent emails'; retry.disabled = !item._id;
+      retry.addEventListener('click', async () => {
+        if (busy || !confirm('Send the emails not recorded as sent for this request?')) return;
+        busy = true; retry.disabled = true;
+        try { const result = await api(`/api/admin/submissions/${encodeURIComponent(item._id)}/retry-emails`, { method: 'POST' }); await refreshSubmissions(); const sent = Object.values(result.notifications).every(value => value.status === 'Sent'); notify(sent ? 'Emails accepted for delivery.' : 'Some emails could not be sent. Check the email connection and delivery status.', !sent); }
+        catch (error) { notify(error.message, true); }
+        finally { busy = false; retry.disabled = false; }
+      }); delivery.append(retry);
+    }
+  }
+}
+$('refresh-submissions').addEventListener('click', async () => { if (busy) return; try { await refreshSubmissions(); notify('Requests refreshed.'); } catch (error) { notify(error.message, true); } });
+$('check-email').addEventListener('click', async () => {
+  const button = $('check-email'); button.disabled = true;
+  try { const result = await api('/api/admin/email-status'); notify(result.ready ? 'Email connection is ready. Notifications go to: ' + result.recipients.join(', ') : 'Email connection failed: ' + result.code + '. Check GMAIL_USER and GMAIL_PASS in your hosting settings.', !result.ready); }
+  catch (error) { notify(error.message, true); }
+  finally { button.disabled = false; }
+});
+setInterval(async () => {
+  if (!authenticated || section !== 'submissions' || busy || refreshingSubmissions || document.hidden) return;
+  refreshingSubmissions = true;
+  try { await refreshSubmissions(); } catch (error) { notify(error.message, true); }
+  finally { refreshingSubmissions = false; }
+}, 10000);

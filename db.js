@@ -13,7 +13,10 @@ const Content = mongoose.models.Content || mongoose.model('Content', schema);
 const Submission = mongoose.models.Submission || mongoose.model('Submission', new mongoose.Schema({
   firstName: String, lastName: String, fullName: String, email: String, phone: String,
   interest: String, message: String, lang: String, ip: String,
-  status: { type: String, default: 'Pending' },
+  status: { type: String, enum: ['Pending', 'Done'], default: 'Pending' },
+  statusUpdatedAt: Date,
+  notifications: { type: Object, default: {} },
+  emailRetryUntil: Date,
   submittedEG: { type: String, default: () => new Date().toLocaleString('en-EG', { timeZone: 'Africa/Cairo' }) }
 }, { timestamps: true }));
 async function getContentDoc() {
@@ -99,5 +102,28 @@ module.exports = {
     return updated[section];
   },
   getSubmissions: async () => { await connectDB(); return Submission.find().sort({ _id: -1 }).lean(); },
+  updateSubmissionStatus: async (id, status, expectedStatus) => {
+    if (!mongoose.isObjectIdOrHexString(id)) bad('Invalid submission ID.');
+    if (!['Pending', 'Done'].includes(status) || !['Pending', 'Done'].includes(expectedStatus)) bad('Invalid submission status.');
+    await connectDB();
+    const filter = { _id: id, ...(expectedStatus === 'Pending' ? { status: { $ne: 'Done' } } : { status: 'Done' }) };
+    const item = await Submission.findOneAndUpdate(filter, { $set: { status, statusUpdatedAt: new Date() } }, { returnDocument: 'after', runValidators: true });
+    if (!item) {
+      const exists = await Submission.exists({ _id: id });
+      const error = new Error(exists ? 'Another admin changed this request. Refresh and try again.' : 'Submission not found.'); error.status = exists ? 409 : 404; throw error;
+    }
+    return item;
+  },
+  updateSubmissionNotifications: async (id, notifications) => {
+    await connectDB();
+    return Submission.findByIdAndUpdate(id, { $set: { notifications }, $unset: { emailRetryUntil: '' } }, { returnDocument: 'after' });
+  },
+  claimSubmissionEmailRetry: async id => {
+    if (!mongoose.isObjectIdOrHexString(id)) bad('Invalid submission ID.');
+    await connectDB();
+    const item = await Submission.findOneAndUpdate({ _id: id, $or: [{ emailRetryUntil: { $exists: false } }, { emailRetryUntil: { $lt: new Date() } }] }, { $set: { emailRetryUntil: new Date(Date.now() + 120000) } }, { returnDocument: 'after' });
+    if (!item) { const error = new Error('Submission not found or email delivery is already in progress.'); error.status = 409; throw error; }
+    return item;
+  },
   addSubmission: async data => { await connectDB(); return Submission.create(data); }
 };

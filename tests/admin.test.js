@@ -7,7 +7,7 @@ function setup() {
   function element() { return { hidden: false, value: '', type: 'password', dataset: {}, listeners: {}, children: [], classList: { add() {}, toggle() {} }, addEventListener(name, fn) { this.listeners[name] = fn; }, append(child) { this.children.push(child); }, replaceChildren() { this.children = []; }, setAttribute() {}, focus() {}, querySelector() { return this.button ||= element(); } }; }
   const get = id => { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); };
   const replies = [];
-  const context = vm.createContext({ document: { getElementById: get, createElement: element, querySelectorAll: () => [] }, URLSearchParams, location: { search: '', pathname: '/admin' }, history: {}, fetch: async () => { const [status, data] = replies.shift(); return { ok: status < 400, status, json: async () => data }; } });
+  const context = vm.createContext({ document: { getElementById: get, createElement: element, querySelectorAll: () => [] }, URLSearchParams, location: { search: '', pathname: '/admin' }, history: {}, setInterval: () => 0, fetch: async () => { const [status, data] = replies.shift(); return { ok: status < 400, status, json: async () => data }; } });
   vm.runInContext(fs.readFileSync('public/admin.js', 'utf8'), context);
   vm.runInContext('renderSection = async () => { globalThis.renderCount = (globalThis.renderCount || 0) + 1; };', context);
   return { get, replies, context };
