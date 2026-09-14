@@ -23,6 +23,7 @@ function createApp(store = db) {
   }
   app.get('/api/content', run(async (req, res) => res.json(await store.getContent())));
   app.use('/api/admin', admin);
+  app.get('/api/admin/session', (req, res) => res.json({ success: true }));
   for (const collection of ['machines', 'locations', 'products', 'faqs', 'partners']) {
     app.get(`/api/admin/${collection}`, run(async (req, res) => res.json((await store.getContent())[collection])));
     app.post(`/api/admin/${collection}`, run(async (req, res) => {

@@ -18,6 +18,8 @@ test('admin authentication, content CRUD, contact validation, and JSON failures'
   const request = (url, method = 'GET', body, authenticated = true) => fetch(base + url, { method, headers: { 'Content-Type': 'application/json', ...(authenticated ? { 'x-admin-pass': process.env.ADMIN_PASSWORD } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
   try {
     assert.equal((await request('/admin')).status, 200);
+    assert.equal((await request('/api/admin/session', 'GET', undefined, false)).status, 401);
+    assert.equal((await request('/api/admin/session')).status, 200);
     assert.equal((await request('/api/admin/machines', 'GET', undefined, false)).status, 401);
     assert.equal((await request('/api/machines', 'POST', { name: 'Unauthorized' }, false)).status, 401);
     for (const key of ['machines', 'locations', 'products', 'faqs', 'partners']) {

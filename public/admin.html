@@ -9,11 +9,11 @@
 </head>
 <body>
   <aside class="sidebar">
-    <a href="/" aria-label="WYT home"><img class="admin-logo" src="/images/logo.jpeg" alt="WYT"></a>
-    <h2>WYT Admin</h2>
-    <nav id="sections" aria-label="Content sections"></nav>
+    <div class="brand"><a href="/" aria-label="WYT home"><img class="admin-logo" src="/images/logo.jpeg" alt="WYT"></a>
+    <h2>WYT Admin</h2></div>
+    <nav id="sections" aria-label="Content sections" hidden></nav><div id="mobile-navigation" class="mobile-navigation" hidden><label for="section-select">Manage content</label><select id="section-select" class="form-control"></select></div><div class="sidebar-actions">
     <a href="/" target="_blank" rel="noopener">View website ↗</a>
-    <button id="logout" class="btn" hidden>Log out</button>
+    <button id="logout" class="btn" hidden>Log out</button></div>
   </aside>
   <main class="main">
     <p id="notice" role="status" aria-live="polite"></p>
@@ -21,12 +21,12 @@
       <h1>Welcome back</h1>
       <p>Enter your admin password to manage the website.</p>
       <form id="login-form">
-        <div class="form-group"><label for="password">Admin password</label><input id="password" type="password" class="form-control" autocomplete="current-password" required></div>
+        <div class="form-group"><label for="password">Admin password</label><div class="password-control"><input id="password" type="password" class="form-control" autocomplete="current-password" autocapitalize="none" spellcheck="false" required><button type="button" id="toggle-password" class="btn password-toggle" aria-label="Show password" aria-pressed="false">Show</button></div></div>
         <button class="btn">Log in</button>
       </form>
     </section>
     <div id="workspace" hidden>
-      <section class="card" id="editor"><h1 id="editor-title"></h1><form id="content-form"><div id="fields"></div><button class="btn" id="save">Save</button></form></section>
+      <section class="card" id="editor"><h1 id="editor-title"></h1><form id="content-form"><div id="fields"></div><div class="form-actions"><button class="btn" id="save">Save</button></div></form></section>
       <section class="card"><h2 id="list-title"></h2><div class="table-wrap"><table><thead id="list-head"></thead><tbody id="content-list"></tbody></table></div></section>
     </div>
   </main>

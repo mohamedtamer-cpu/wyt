@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-let password = '', section = 'machines', content = {}, imageValue = '', readingImage = false, busy = false;
+let password = '', section = 'machines', content = {}, imageValue = '', readingImage = false, busy = false, loggingIn = false, authenticated = false, resumeDraft = false;
 const definitions = {
   machines: ['name', 'nameAr', 'badge', 'badgeAr', 'desc', 'descAr', 'image', 'specs'],
   locations: ['name', 'nameAr', 'type', 'typeAr', 'machine', 'area', 'areaAr', 'image', 'featured'],
@@ -12,16 +12,34 @@ const definitions = {
 const labels = { nameAr: 'Name (Arabic)', badgeAr: 'Badge (Arabic)', desc: 'Description', descAr: 'Description (Arabic)', typeAr: 'Type (Arabic)', areaAr: 'Area (Arabic)', q: 'Question', qAr: 'Question (Arabic)', a: 'Answer', aAr: 'Answer (Arabic)', bg: 'Badge background color', color: 'Badge text color', specs: 'Specifications (one per line: Label | Value)', items: 'Product items (one per line)', addressAr: 'Address (Arabic)', hoursAr: 'Hours (Arabic)' };
 const title = text => text.charAt(0).toUpperCase() + text.slice(1);
 function notify(message, error = false) { $('notice').textContent = message; $('notice').className = error ? 'error' : 'success'; }
+function showLogin() {
+  authenticated = false;
+  $('login').hidden = false; $('workspace').hidden = true;
+  $('logout').hidden = true; $('sections').hidden = true; $('mobile-navigation').hidden = true;
+}
+function showWorkspace() {
+  authenticated = true;
+  $('login').hidden = true; $('workspace').hidden = false;
+  $('logout').hidden = false; $('sections').hidden = false; $('mobile-navigation').hidden = false;
+}
 async function api(url, options = {}) {
   const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', 'x-admin-pass': password } });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
+  if (!response.ok) {
+    if (response.status === 401 && authenticated) {
+      resumeDraft = true; password = ''; showLogin();
+      $('password').focus();
+      throw new Error('Please log in again. Your unsaved form is kept until you reconnect.');
+    }
+    throw new Error(data.error || `Request failed (${response.status}).`);
+  }
   return data;
 }
 function inputField(key, value = '') {
   const group = document.createElement('div'); group.className = 'form-group';
   const label = document.createElement('label'); label.htmlFor = 'field-' + key; label.textContent = labels[key] || title(key);
   const field = document.createElement(['desc', 'descAr', 'a', 'aAr', 'specs', 'items'].includes(key) ? 'textarea' : 'input');
+  if (['desc', 'descAr', 'a', 'aAr', 'image', 'specs', 'items'].includes(key)) group.classList.add('wide');
   field.id = label.htmlFor; field.name = key; field.className = 'form-control';
   field.type = key === 'featured' ? 'checkbox' : key === 'image' ? 'file' : key === 'email' ? 'email' : 'text';
   if (key === 'featured') field.checked = !!value;
@@ -48,6 +66,7 @@ function inputField(key, value = '') {
   return group;
 }
 async function renderSection() {
+  $('section-select').value = section;
   imageValue = ''; $('fields').replaceChildren(); $('content-list').replaceChildren(); $('list-head').replaceChildren();
   document.querySelectorAll('#sections button').forEach(button => button.classList.toggle('active', button.dataset.section === section));
   $('editor').hidden = section === 'submissions';
@@ -70,7 +89,7 @@ async function renderSection() {
   for (const item of rows) {
     const row = $('content-list').insertRow();
     const values = section === 'submissions' ? [item.fullName || `${item.firstName || ''} ${item.lastName || ''}`, `${item.email || ''}\n${item.phone || ''}`, `${item.message || ''}\n${item.interest || ''}`, item.submittedEG || ''] : [item.name || item.q || 'Untitled', item.desc || item.a || item.area || item.initials || ''];
-    values.forEach(value => { row.insertCell().textContent = value; });
+    values.forEach((value, index) => { const cell = row.insertCell(); cell.textContent = value; cell.dataset.label = headings[index]; });
     if (section !== 'submissions') {
       const button = document.createElement('button'); button.className = 'btn btn-danger'; button.textContent = 'Delete'; button.disabled = !item._id;
       button.addEventListener('click', async () => {
@@ -79,22 +98,46 @@ async function renderSection() {
         try { await api(`/api/admin/${section}/${encodeURIComponent(item._id)}`, { method: 'DELETE' }); content = await api('/api/content'); await renderSection(); notify('Entry deleted.'); }
         catch (error) { notify(error.message, true); button.disabled = false; }
         finally { busy = false; }
-      }); row.insertCell().append(button);
+      }); const action = row.insertCell(); action.dataset.label = 'Action'; action.append(button);
     }
   }
 }
 $('login-form').addEventListener('submit', async event => {
-  event.preventDefault(); password = $('password').value;
-  const button = event.submitter; button.disabled = true;
-  try { await api('/api/admin/machines'); content = await api('/api/content'); $('login').hidden = true; $('workspace').hidden = false; $('logout').hidden = false; $('password').value = ''; await renderSection(); notify('Connected. Your dashboard is ready.'); }
-  catch (error) { password = ''; notify(error.message, true); }
-  finally { button.disabled = false; }
+  event.preventDefault(); if (loggingIn) return;
+  loggingIn = true; password = $('password').value;
+  const button = $('login-form').querySelector('button[type="submit"], button:not([type])'); button.disabled = true;
+  notify('Connecting…');
+  try {
+    await api('/api/admin/session'); content = await api('/api/content');
+    if (!resumeDraft) await renderSection();
+    resumeDraft = false; showWorkspace(); $('password').value = '';
+    notify('Connected. Your dashboard is ready.');
+  } catch (error) { password = ''; showLogin(); notify(error.message, true); }
+  finally { loggingIn = false; button.disabled = false; }
 });
-$('logout').addEventListener('click', () => { password = ''; content = {}; $('workspace').hidden = true; $('login').hidden = false; $('logout').hidden = true; $('content-list').replaceChildren(); notify('Logged out.'); });
-for (const key of Object.keys(definitions)) {
-  const button = document.createElement('button'); button.textContent = title(key); button.dataset.section = key;
-  button.addEventListener('click', async () => { if (!password || busy || readingImage) return; section = key; try { await renderSection(); } catch (error) { notify(error.message, true); } }); $('sections').append(button);
+$('toggle-password').addEventListener('click', () => {
+  const show = $('password').type === 'password';
+  $('password').type = show ? 'text' : 'password';
+  $('toggle-password').textContent = show ? 'Hide' : 'Show';
+  $('toggle-password').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  $('toggle-password').setAttribute('aria-pressed', String(show));
+});
+$('logout').addEventListener('click', () => {
+  if (busy || readingImage || loggingIn) return;
+  password = ''; content = {}; imageValue = ''; resumeDraft = false; showLogin();
+  $('content-list').replaceChildren(); $('fields').replaceChildren(); notify('Logged out.');
+});
+async function selectSection(key) {
+  if (!authenticated || busy || readingImage) { $('section-select').value = section; return; }
+  section = key;
+  try { await renderSection(); } catch (error) { notify(error.message, true); }
 }
+for (const key of Object.keys(definitions)) {
+  const button = document.createElement('button'); button.textContent = key === 'faqs' ? 'FAQs' : title(key); button.dataset.section = key;
+  button.addEventListener('click', () => selectSection(key)); $('sections').append(button);
+  const option = document.createElement('option'); option.value = key; option.textContent = button.textContent; $('section-select').append(option);
+}
+$('section-select').addEventListener('change', event => selectSection(event.target.value));
 $('content-form').addEventListener('submit', async event => {
   event.preventDefault(); if (busy || readingImage) return;
   const form = new FormData(event.target), payload = {};
